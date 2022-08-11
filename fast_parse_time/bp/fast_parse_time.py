@@ -2,7 +2,10 @@
 # -*- coding: UTF-8 -*-
 """ Analyze Time References in Text """
 
-from fast_parse_time.svc import FindTimeReference
+
+from datetime import datetime
+
+from fast_parse_time.svc import ResolveTimeReferences
 from fast_parse_time.svc import AnalyzeTimeReferences
 
 # class Singleton(object):
@@ -26,9 +29,10 @@ from fast_parse_time.svc import AnalyzeTimeReferences
 # s = Singleton()
 
 
-def has_time_references(input_text: str) -> bool:
-    return FindTimeReference().find_matches(input_text)
-
-
 def transform(input_text: str) -> str:
-    return AnalyzeTimeReferences().process(input_text)
+    current_time = datetime.now()
+    solutions = AnalyzeTimeReferences().process(input_text)
+    if solutions and len(solutions):
+        return ResolveTimeReferences().process(
+            solutions=solutions,
+            current_time=current_time)

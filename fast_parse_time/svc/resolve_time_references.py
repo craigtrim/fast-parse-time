@@ -3,6 +3,10 @@
 """ Resolve Time Solutions Located in the Text """
 
 
+from datetime import datetime
+from datetime import timedelta
+
+from baseblock import Stopwatch
 from baseblock import BaseObject
 
 
@@ -18,7 +22,66 @@ class ResolveTimeReferences(BaseObject):
         """
         BaseObject.__init__(self, __name__)
 
+    @staticmethod
+    def _get_timedelta(solution: list) -> timedelta:
+        x = solution['Cardinality']
+        if solution['Tense'] == 'past':
+            x *= -1
+
+        if solution['Frame'] == 'year':
+            x *= 365
+            return timedelta(days=x)
+
+        if solution['Frame'] == 'month':
+            x *= 30  # ave. of 30 days/mo
+            # if you want to get clever find the current month, then step forward or backward % 12 and get 28,29,30,31 :/
+            return timedelta(days=x)
+
+        if solution['Frame'] == 'week':
+            x *= 7
+            return timedelta(days=x)
+
+        if solution['Frame'] == 'day':
+            return timedelta(days=x)
+
+        if solution['Frame'] == 'hour':
+            return timedelta(hours=x)
+
+        if solution['Frame'] == 'minute':
+            return timedelta(minutes=x)
+
+        if solution['Frame'] == 'second':
+            return timedelta(seconds=x)
+
+        raise NotImplementedError(solution['Frame'])
+
+    def _process(self,
+                 solutions: list,
+                 current_time: str) -> list:
+        new_time = current_time
+        for solution in solutions:
+            new_time = new_time + self._get_timedelta(solution)
+
+        return new_time
+
     def process(self,
-                input_text: str,
-                current_time: str) -> list:
-        pass
+                solutions: list,
+                current_time: datetime) -> str or None:
+
+        sw = Stopwatch()
+
+        if not solutions or not len(solutions):
+            return None
+
+        new_time = self._process(solutions=solutions,
+                                 current_time=current_time)
+
+        if self.isEnabledForDebug:
+            self.logger.debug('\n'.join([
+                "Time Resolution Completd",
+                f"\tTotal Time: {str(sw)}",
+                f"\tTotal Solutions:  {len(solutions)}",
+                f"\tInput Time: {current_time}",
+                f"\tOutput Time: {new_time}"]))
+
+        return new_time
