@@ -15,7 +15,7 @@ d_deitic_words_kb = {
     # 'at': ['at', 'at'],
     # 'on': ['on', 'on'],
     # 'for': ['len', 'for'],
-    'untill': ['len', 'till'],
+    'until': ['len', 'till'],
     'till': ['len', 'till'],
     # 'a': ['a', 'a'],
     # 'an': ['a', 'an'],

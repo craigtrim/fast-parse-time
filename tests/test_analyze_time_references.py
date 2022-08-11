@@ -1,4 +1,4 @@
-from fast_parse_time.svc import AnalyzeTimeReferences
+from fast_parse_time.runtime.svc import AnalyzeTimeReferences
 
 
 def test_service():

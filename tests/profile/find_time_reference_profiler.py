@@ -1,6 +1,6 @@
 from baseblock import Stopwatch
 
-from fast_parse_time.svc import FindTimeReference
+from fast_parse_time.runtime.svc import FindTimeReference
 
 
 def has_candidate_match(input_text: str):
