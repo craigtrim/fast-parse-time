@@ -1,5 +1,5 @@
 [tool.poetry]
-authors = ["Craig Trim <craig@bast.ai>"]
+authors = ["Craig Trim <craigtrim@gmail.com>"]
 description = "Natural Language (NLP) Extraction of Date and Time"
 name = "fast-parse-time"
 version = "0.1.1"
@@ -7,8 +7,10 @@ version = "0.1.1"
 [tool.poetry.dependencies]
 baseblock = "*"
 natural-time = "*"
+openpyxl = "*"
 pandas = "*"
 python = "3.8.5"
+tabulate = "*"
 
 [tool.poetry.dev-dependencies]
 autopep8 = "*"

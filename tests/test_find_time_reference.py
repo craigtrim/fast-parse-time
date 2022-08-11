@@ -1,4 +1,4 @@
-from fast_parse_time.runtime.svc import FindTimeReference
+from fast_parse_time.svc import FindTimeReference
 
 
 def test_service():
