@@ -5,6 +5,7 @@ name = "fast-parse-time"
 version = "0.1.0"
 
 [tool.poetry.dependencies]
+baseblock = "*"
 natural-time = "*"
 python = "3.8.5"
 

@@ -19,7 +19,7 @@ test:
 
 build:
 	make install
-# 	make test
+	make test
 	poetry build
 
 copy:
