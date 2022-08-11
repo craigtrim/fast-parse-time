@@ -6,8 +6,8 @@ def test_service():
     svc = AnalyzeTimeReferences()
     assert svc
 
-    print(svc.process('the explosion happened 5 minutes ago'))
-    print(svc.process('I want to see my history for the past 30 minutes'))
+    solutions = svc.process('the explosion happened 5 minutes ago')
+    # print(svc.process('I want to see my history for the past 30 minutes'))
 
 
 def main():

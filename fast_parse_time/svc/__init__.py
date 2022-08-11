@@ -1,2 +1,2 @@
-from .find_time_reference import FindTimeReference
+from .resolve_time_references import ResolveTimeReferences
 from .analyze_time_references import AnalyzeTimeReferences
