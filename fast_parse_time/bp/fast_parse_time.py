@@ -5,34 +5,35 @@
 
 from datetime import datetime
 
-from fast_parse_time.svc import ResolveTimeReferences
-from fast_parse_time.svc import AnalyzeTimeReferences
 
-# class Singleton(object):
+class Singleton(object):
 
-#     __analyze = None
-#     __find_matches = None
+    __analyze = None
+    __resolve = None
 
-#     def find_matches(self) -> object:
-#         if not self.__find_matches:
-#             from fast_parse_time.svc import FindTimeReference
-#             self.__find_matches = FindTimeReference().find_matches
-#         return self.__find_matches
+    def resolve(self) -> object:
+        if not self.__resolve:
+            from fast_parse_time.svc import ResolveTimeReferences
+            self.__resolve = ResolveTimeReferences().process
+        return self.__resolve
 
-#     def analyze(self) -> object:
-#         if not self.__analyze:
-#             from fast_parse_time.svc import AnalyzeTimeReferences
-#             self.__analyze = AnalyzeTimeReferences().process
-#         return self.__analyze
+    def analyze(self) -> object:
+        if not self.__analyze:
+            from fast_parse_time.svc import AnalyzeTimeReferences
+            self.__analyze = AnalyzeTimeReferences().process
+        return self.__analyze
 
 
-# s = Singleton()
+s = Singleton()
 
 
 def transform(input_text: str) -> str:
     current_time = datetime.now()
-    solutions = AnalyzeTimeReferences().process(input_text)
+
+    d_result = s.analyze()(input_text)
+    solutions = d_result['result']
+
     if solutions and len(solutions):
-        return ResolveTimeReferences().process(
+        return s.resolve()(
             solutions=solutions,
             current_time=current_time)

@@ -3,14 +3,14 @@
 """ Analyze Time References in Text """
 
 
-from doctest import master
-import token
 from baseblock import Stopwatch
 from baseblock import BaseObject
+from baseblock import ServiceEventGenerator
 
-from fast_parse_time.dto import d_keyterm_counter_kb
-from fast_parse_time.dto import d_index_by_keyterm_kb
-from fast_parse_time.dto import d_index_by_slot_kb
+from fast_parse_time.dmo import DigitTextReplacer
+from fast_parse_time.dmo import KeywordSequenceFilter
+from fast_parse_time.dmo import KeywordSequenceExtractor
+from fast_parse_time.dmo import SequenceSolutionFinder
 
 
 class AnalyzeTimeReferences(BaseObject):
@@ -24,130 +24,46 @@ class AnalyzeTimeReferences(BaseObject):
             craigtrim@gmail.com
         """
         BaseObject.__init__(self, __name__)
-        self._keyterms = set(d_keyterm_counter_kb.keys())
+        self._generate_event = ServiceEventGenerator().process
 
-    def _extract_keyword_sequences(self,
-                                   tokens: list) -> list:
-        """ Extract Keyword Sequences
+        self._digit_replacer = DigitTextReplacer().process
+        self._filter_sequences = KeywordSequenceFilter().process
+        self._extract_sequences = KeywordSequenceExtractor().process
+        self._find_solutions = SequenceSolutionFinder().process
 
-        This is an extraction and correlation of contiguous time sequences within text
-
-        Args:
-            tokens (list): an incoming list of tokens from the user input text
-
-            Example 1:
-                Sample Input Text:              "from Joe Smith 5 days ago"
-                Sample Keyword Sequence:        [ ['from'], ['5', 'days', 'ago'] ]
-
-            Example 2:           
-                Sample Input Text:              "from Joe Smith 4 years and 3 months ago"
-                Sample Keyword Sequence:        [ ['from'], ['4', 'years'], ['3', 'months', 'ago'] ],
-
-        Returns:
-            list: a list of lists
-        """
-
-        master = []
-
-        buffer = []
-        for token in tokens:
-            if token in self._keyterms:
-                buffer.append(token)
-            else:
-                if len(buffer):
-                    master.append(buffer)
-                    buffer = []
-        if len(buffer):
-            master.append(buffer)
-
-        return master
-
-    @staticmethod
-    def _intersection(list_of_sets: list) -> set:
-        master = list_of_sets[0]
-
-        for s in list_of_sets[1:]:
-            master = master.intersection(s)
-
-        return master
-
-    @staticmethod
-    def _filter(sequences: list) -> list:
-        """ Filter Sequences for Invalid Keys
-
-        Sample Input Text:
-            from here show me all 5 items all the history from 5 days ago
-        Sample Sequences:
-            [   
-                ['from'], 
-                ['5'], 
-                ['from', '5', 'days', 'ago']
-            ]
-            -   the first two sequences don't exist in 'd_index_by_slot_kb' 
-                and can be discarded immediately
-            -   the second sequence can be sliced and diced into candidates:
-                    [
-                        ['from', '5', 'days'],
-                        ['5', 'days', 'ago']
-                    ]
-                and each candidate checked against 'd_index_by_slot_kb' for validity
-
-        Args:
-            sequences (list): the incoming sequences
-
-        Returns:
-            list: the filtered sequences
-        """
-        normalized = []
-
-        for sequence in sequences:
-            slot = ' '.join(sequence).strip()
-            exists = slot in d_index_by_slot_kb
-
-            if exists:
-                normalized.append(sequence)
-            elif not exists and len(sequence) == 1:
-                continue
-            elif ' '.join(sequence[1:]) in d_index_by_slot_kb:
-                normalized.append(sequence[1:])
-            elif ' '.join(sequence[:-1]) in d_index_by_slot_kb:
-                normalized.append(sequence[:-1])
-
-        return normalized
 
     def _process(self,
-                 input_text: str) -> list:
-        input_text = input_text.lower().strip()
-        tokens = input_text.split()
+                 input_text: str) -> dict:
 
-        sequences = self._extract_keyword_sequences(tokens)
-        print(sequences)
+        tokens = input_text.lower().strip().split()
 
-        sequences = self._filter(sequences)
-        print(sequences)
+        tokens = self._digit_replacer(tokens)
+        sequences = self._extract_sequences(tokens)
+        sequences = self._filter_sequences(sequences)
+        solutions = self._find_solutions(sequences)
 
-        solutions = []
-        for sequence in sequences:
-
-            sets = []
-            for keyterm in sequence:
-                sets.append(set(d_index_by_keyterm_kb[keyterm]))
-
-            candidates = self._intersection(sets)
-            if len(candidates) == 1:
-                solutions.append(d_index_by_slot_kb[list(candidates)[0]])
-
-        print (solutions)
-        return solutions
+        return {
+            'input_text': input_text,
+            'tokens': tokens,
+            'sequences': sequences,
+            'solutions': solutions
+        }
 
     def process(self,
                 input_text: str) -> list or None:
         sw = Stopwatch()
 
-        solutions = self._process(input_text)
+        d_result = self._process(input_text)
+
+        # COR-80; Generate an Event Record
+        d_event = self._generate_event(
+            service_name=self.component_name(),
+            event_name='generate-about-marv',
+            stopwatch=sw,
+            data=d_result)
 
         if self.isEnabledForDebug:
-            if not solutions or not len(solutions):
+            if not d_result['solutions'] or not len(d_result['solutions']):
                 self.logger.debug('\n'.join([
                     "No Solutions Found",
                     f"\tTotal Time: {str(sw)}",
@@ -157,6 +73,9 @@ class AnalyzeTimeReferences(BaseObject):
                     "Time Reference Solutions Found",
                     f"\tTotal Time: {str(sw)}",
                     f"\tInput Text: {input_text}",
-                    f"\tTotal Solutions: {len(solutions)}"]))
+                    f"\tTotal Solutions: {len(d_result['solutions'])}"]))
 
-        return solutions
+        return {
+            'result': d_result['solutions'],
+            'events': [d_event]
+        }
