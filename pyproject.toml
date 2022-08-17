@@ -2,7 +2,7 @@
 authors = ["Craig Trim <craigtrim@gmail.com>"]
 description = "Natural Language (NLP) Extraction of Date and Time"
 name = "fast-parse-time"
-version = "0.1.4"
+version = "0.1.5"
 
 [tool.poetry.dependencies]
 baseblock = "*"
