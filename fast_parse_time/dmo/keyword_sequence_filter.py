@@ -15,12 +15,12 @@ class KeywordSequenceFilter(BaseObject):
         from here show me all 5 items all the history from 5 days ago
 
     Sample Sequences:
-        [   
-            ['from'], 
-            ['5'], 
+        [
+            ['from'],
+            ['5'],
             ['from', '5', 'days', 'ago']
         ]
-        -   the first two sequences don't exist in 'd_index_by_slot_kb' 
+        -   the first two sequences don't exist in 'd_index_by_slot_kb'
             and can be discarded immediately
         -   the second sequence can be sliced and diced into candidates:
                 [

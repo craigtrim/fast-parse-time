@@ -31,7 +31,6 @@ class AnalyzeTimeReferences(BaseObject):
         self._extract_sequences = KeywordSequenceExtractor().process
         self._find_solutions = SequenceSolutionFinder().process
 
-
     def _process(self,
                  input_text: str) -> dict:
 
@@ -58,21 +57,21 @@ class AnalyzeTimeReferences(BaseObject):
         # COR-80; Generate an Event Record
         d_event = self._generate_event(
             service_name=self.component_name(),
-            event_name='generate-about-marv',
+            event_name='analyze-time-references',
             stopwatch=sw,
             data=d_result)
 
         if self.isEnabledForDebug:
             if not d_result['solutions'] or not len(d_result['solutions']):
                 self.logger.debug('\n'.join([
-                    "No Solutions Found",
-                    f"\tTotal Time: {str(sw)}",
-                    f"\tInput Text: {input_text}"]))
+                    'No Solutions Found',
+                    f'\tTotal Time: {str(sw)}',
+                    f'\tInput Text: {input_text}']))
             else:
                 self.logger.debug('\n'.join([
-                    "Time Reference Solutions Found",
-                    f"\tTotal Time: {str(sw)}",
-                    f"\tInput Text: {input_text}",
+                    'Time Reference Solutions Found',
+                    f'\tTotal Time: {str(sw)}',
+                    f'\tInput Text: {input_text}',
                     f"\tTotal Solutions: {len(d_result['solutions'])}"]))
 
         return {

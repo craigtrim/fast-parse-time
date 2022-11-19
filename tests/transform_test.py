@@ -14,5 +14,5 @@ def main():
     test_transform()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

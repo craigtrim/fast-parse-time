@@ -1,19 +1,61 @@
 [tool.poetry]
-authors = ["Craig Trim <craigtrim@gmail.com>"]
+
+authors = [
+  "Craig Trim <craigtrim@gmail.com>",
+]
+
+maintainers = [
+  "Craig Trim <craigtrim@gmail.com>",
+]
+
 description = "Natural Language (NLP) Extraction of Date and Time"
+license = "None"
 name = "fast-parse-time"
+readme = "README.md"
 version = "0.1.5"
+
+keywords = ["nlp", "nlu", "stem", "porter", "stemmer"]
+repository = "https://github.com/craigtrim/fast-parse-time"
+
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[tool.poetry.urls]
+"Bug Tracker" = "https://github.com/craigtrim/fast-parse-time/issues"
+
+[tool.poetry.build]
+generate-setup-file = true
 
 [tool.poetry.dependencies]
 baseblock = "*"
-python = "3.8.5"
+python = "^3.8.5"
 word2number = "*"
 
 [tool.poetry.dev-dependencies]
 autopep8 = "*"
+flakeheaven = "*"
 plac = "*"
+pre-commit = "^2.20.0"
 pytest = "*"
 
 [build-system]
 build-backend = "poetry.core.masonry.api"
 requires = ["poetry-core>=1.0.0"]
+
+[tool.flakeheaven]
+base = "https://raw.githubusercontent.com/flakeheaven/flakeheaven/main/pyproject.toml"
+exclude = ["__init__.py", "README.md", "setup.py", ".venv", ".git"]
+format = "grouped"
+max_line_length = 500
+show_source = true
+
+[tool.flakeheaven.plugins]
+# F401 (Missing Import)
+# F403 (Unable to Detect Undefined Names)
+"flake8-*" = ["+*"]
+flake8-bandit = ["-*", "+S1??"]
+flake8-docstrings = ["-*"]
+pyflakes = ["+*", "-F401", "-F403"]

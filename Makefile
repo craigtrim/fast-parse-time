@@ -1,31 +1,40 @@
-ifeq ($(OS),Windows_NT)
-	os_shell := powershell
-	copy_lib := .\resources\scripts\copy.ps1
-else
-	os_shell := $(SHELL)
-	copy_lib := resources/scripts/copy.sh
-endif
-
-# -----------------------------------------------------------------
+# ----------------------------------------------------------------
+# fast-parse-time
+# ----------------------------------------------------------------
 
 install:
+	@echo Installing Microservice
 	poetry check
 	poetry lock
 	poetry update
 	poetry install
+	poetry run pre-commit install
+
+activate:
+	@echo Activating Microservice
+	poetry run pre-commit autoupdate
 
 test:
+	echo Unit Testing Microservice
 	poetry run pytest --disable-pytest-warnings
 
 build:
+	@echo Building Microservice
 	make install
 	make test
 	poetry build
 
-copy:
-	$(os_shell) $(copy_lib)
+linters:
+	@echo "Running Linters"
+	poetry run pre-commit run --all-files
+	poetry run flakeheaven lint
+
+freeze:
+	@echo "Freezing Requirements"
+	poetry run pip freeze > requirements.txt
+	poetry run python -m pip install --upgrade pip
 
 all:
 	make build
-#	make copy
-	poetry run python -m pip install --upgrade pip
+	make linters
+	make freeze

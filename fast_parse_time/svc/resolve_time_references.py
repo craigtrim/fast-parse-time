@@ -78,10 +78,10 @@ class ResolveTimeReferences(BaseObject):
 
         if self.isEnabledForDebug:
             self.logger.debug('\n'.join([
-                "Time Resolution Completd",
-                f"\tTotal Time: {str(sw)}",
-                f"\tTotal Solutions:  {len(solutions)}",
-                f"\tInput Time: {current_time}",
-                f"\tOutput Time: {new_time}"]))
+                'Time Resolution Completd',
+                f'\tTotal Time: {str(sw)}',
+                f'\tTotal Solutions:  {len(solutions)}',
+                f'\tInput Time: {current_time}',
+                f'\tOutput Time: {new_time}']))
 
         return new_time
