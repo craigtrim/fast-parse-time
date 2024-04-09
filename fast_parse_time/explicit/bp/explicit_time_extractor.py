@@ -11,6 +11,7 @@ from fast_parse_time.explicit.svc import (
     PreClassifyNumericComponents,
     TokenizeNumericComponents,
     ClassifyNumericComponents,
+    ValidateNumericComponents,
 )
 
 
@@ -20,6 +21,7 @@ class ExplicitTimeExtractor(BaseObject):
     __preclassify_numeric: PreClassifyNumericComponents = None
     __tokenize_numeric: TokenizeNumericComponents = None
     __classify_numeric: ClassifyNumericComponents = None
+    __validate_numeric: ValidateNumericComponents = None
 
     def __init__(self):
         """ Change Log
@@ -68,8 +70,18 @@ class ExplicitTimeExtractor(BaseObject):
         if not d_classified_dates or not len(d_classified_dates):
             return None
 
+        if not self.__validate_numeric:
+            self.__validate_numeric = ValidateNumericComponents()
+
+        d_classified_dates: Optional[
+            Dict[str, DateType]
+        ] = self.__validate_numeric.process(d_classified_dates)
+
+        if not d_classified_dates or not len(d_classified_dates):
+            return None
+
         if self.isEnabledForInfo:
             self.logger.info(
-                f'Date Classification Completed in {str(sw)} for {input_text} with {d_classified_dates}')
+                f"Date Classification for '{input_text}' is {d_classified_dates} in {str(sw)}")
 
         return d_classified_dates

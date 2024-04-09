@@ -11,7 +11,7 @@ dateparser==1.2.0
 distlib==0.3.8
 distro==1.9.0
 entrypoints==0.4
--e git+ssh://git@github.com/craigtrim/fast-parse-time.git@8b85c51f355389319e2eb217c4614f19e08b1648#egg=fast_parse_time
+-e git+ssh://git@github.com/craigtrim/fast-parse-time.git@dd667163d84e010a606056a8cf99796aced5a620#egg=fast_parse_time
 filelock==3.13.3
 flake8==7.0.0
 flakeheaven==0.11.0

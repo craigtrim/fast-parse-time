@@ -125,9 +125,9 @@ class DelimitedDateClassifier(BaseObject):
 
         return date_component_types
 
-    def process(self,
-                input_text: str,
-                delimiter: str) -> Optional[DateType]:
+    def _process(self,
+                 input_text: str,
+                 delimiter: str) -> Optional[DateType]:
 
         total_delimiters = input_text.count(delimiter)
         if total_delimiters == 0 or total_delimiters >= 3:
@@ -197,3 +197,16 @@ class DelimitedDateClassifier(BaseObject):
             ]
             self.logger.info(
                 f'Unrecognized Date Component Classification: {date_component_type_str}')
+
+    def process(self,
+                input_text: str,
+                delimiter: str) -> Optional[DateType]:
+
+        result: Optional[DateType] = self._process(
+            input_text=input_text, delimiter=delimiter)
+
+        if result and not isinstance(result, DateType):
+            raise TypeError(
+                f'Input Text: {input_text} has wrong type: {type(input_text)}')
+
+        return result

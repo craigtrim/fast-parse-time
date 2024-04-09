@@ -33,9 +33,8 @@ class DelimitedDateClassifierTest(unittest.TestCase):
             self.classifier.process(input_text='29/2', delimiter='/'),
             DateType.DAY_MONTH)
 
-        print('>>> ',
-            self.classifier.process(input_text='30/2', delimiter='/')
-        )
+        self.assertEqual(self.classifier.process(
+            input_text='30/2', delimiter='/'), DateType.DAY_MONTH)
 
 
 if __name__ == '__main__':
