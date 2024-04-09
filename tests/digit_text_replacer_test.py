@@ -1,4 +1,4 @@
-from fast_parse_time.dmo import DigitTextReplacer
+from fast_parse_time.implicit.dmo import DigitTextReplacer
 
 dmo = DigitTextReplacer()
 assert dmo

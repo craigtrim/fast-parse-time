@@ -5,7 +5,7 @@
 
 from baseblock import BaseObject
 
-from fast_parse_time.dto import d_keyterm_counter_kb
+from fast_parse_time.implicit.dto import d_keyterm_counter_kb
 
 
 class KeywordSequenceExtractor(BaseObject):
