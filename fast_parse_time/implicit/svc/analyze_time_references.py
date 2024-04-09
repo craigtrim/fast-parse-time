@@ -5,12 +5,13 @@
 
 from baseblock import Stopwatch
 from baseblock import BaseObject
+from typing import Optional
 from baseblock import ServiceEventGenerator
 
-from fast_parse_time.dmo import DigitTextReplacer
-from fast_parse_time.dmo import KeywordSequenceFilter
-from fast_parse_time.dmo import KeywordSequenceExtractor
-from fast_parse_time.dmo import SequenceSolutionFinder
+from fast_parse_time.implicit.dmo import DigitTextReplacer
+from fast_parse_time.implicit.dmo import KeywordSequenceFilter
+from fast_parse_time.implicit.dmo import KeywordSequenceExtractor
+from fast_parse_time.implicit.dmo import SequenceSolutionFinder
 
 
 class AnalyzeTimeReferences(BaseObject):
@@ -49,7 +50,7 @@ class AnalyzeTimeReferences(BaseObject):
         }
 
     def process(self,
-                input_text: str) -> list or None:
+                input_text: str) -> Optional[list]:
         sw = Stopwatch()
 
         d_result = self._process(input_text)

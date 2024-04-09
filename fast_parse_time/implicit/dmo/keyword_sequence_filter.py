@@ -5,7 +5,7 @@
 
 from baseblock import BaseObject
 
-from fast_parse_time.dto import d_index_by_slot_kb
+from fast_parse_time.implicit.dto import d_index_by_slot_kb
 
 
 class KeywordSequenceFilter(BaseObject):
