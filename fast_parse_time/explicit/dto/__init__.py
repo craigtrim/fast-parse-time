@@ -1,5 +1,6 @@
 from enum import Enum, auto
 from datetime import datetime
+from typing import Optional
 
 date_delims = [
     '/', '.', '-'
@@ -38,3 +39,13 @@ class DateType(Enum):
     RECURRENT_DATE = auto()  # e.g., every Monday, annually on July 4th
     FUZZY_DATE = auto()  # e.g., late March, early 2020s
     NO_DATE = auto()  # Text chunks with no date information
+
+    def find(input_text: str) -> Optional['DateType']:
+
+        if not isinstance(input_text, str):
+            return None
+
+        input_text = input_text.upper().strip()
+        for date_type in DateType:
+            if date_type.name == input_text:
+                return date_type

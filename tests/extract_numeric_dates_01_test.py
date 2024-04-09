@@ -24,9 +24,13 @@ class DelimitedDateClassifierTest(unittest.TestCase):
                     f'Error: Input Text `{input_text}` is unexpectedly null')
             self.assertIsNone(d_actual)
 
+        if d_expected is None and d_actual is not None:
+            self.assertIsNotNone(d_actual)
+
         if d_actual != d_expected:
             print(
-                f'Error: Input Text `{input_text}` is `{d_actual}` not `{d_actual}`')
+                f'Error: Input Text `{input_text}` is {d_actual} not {d_expected}')
+
         self.assertEqual(d_actual, d_expected)
 
     def test_full_dates(self):
@@ -43,6 +47,10 @@ class DelimitedDateClassifierTest(unittest.TestCase):
     def test_month_days_false_positives(self):
         self.compare(
             input_text='blah blah 3/32 blah blah', d_expected=None)
+
+    def test_needs_validation(self):
+        self.compare(
+            input_text='blah blah 2/30 blah blah', d_expected=None)
 
     def test_month_days_ambiguous(self):
         self.compare(

@@ -67,11 +67,11 @@ class ClassifyNumericComponents(BaseObject):
 
         d: Dict[str, DateType] = {}
         for input_token in input_tokens:
-            d[input_token] = self._classify_date_type(input_token)
+            date_type = self._classify_date_type(input_token)
+            if date_type:
+                d[input_token] = date_type.name
 
         if not d or not len(d):
             return None
 
-        return {
-            k: d[k].name for k in d if d[k]
-        }
+        return d
