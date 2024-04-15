@@ -11,19 +11,19 @@ dateparser==1.2.0
 distlib==0.3.8
 distro==1.9.0
 entrypoints==0.4
--e git+ssh://git@github.com/craigtrim/fast-parse-time.git@abc1a39835203e0b8d9f2c885ee941c175ab4d6a#egg=fast_parse_time
-filelock==3.13.3
+-e git+ssh://git@github.com/craigtrim/fast-parse-time.git@cd47ec98930d8241cef3f63eef978dcfe12782bb#egg=fast_parse_time
+filelock==3.13.4
 flake8==7.0.0
 flakeheaven==0.11.0
 h11==0.14.0
 httpcore==1.0.5
 httpx==0.27.0
 identify==2.5.35
-idna==3.6
+idna==3.7
 iniconfig==2.0.0
 mccabe==0.7.0
 nodeenv==1.8.0
-openai==1.16.2
+openai==1.18.0
 packaging==24.0
 plac==1.4.3
 platformdirs==4.2.0
@@ -31,8 +31,8 @@ pluggy==1.4.0
 pre-commit==2.21.0
 pycodestyle==2.11.1
 pycparser==2.22
-pydantic==2.6.4
-pydantic_core==2.16.3
+pydantic==2.7.0
+pydantic_core==2.18.1
 pyflakes==3.2.0
 Pygments==2.17.2
 pytest==8.1.1
