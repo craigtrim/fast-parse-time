@@ -12,7 +12,7 @@ description = "Natural Language (NLP) Extraction of Date and Time"
 license = "None"
 name = "fast-parse-time"
 readme = "README.md"
-version = "0.1.14"
+version = "0.1.15"
 
 keywords = ["nlp", "nlu", "stem", "porter", "stemmer"]
 repository = "https://github.com/craigtrim/fast-parse-time"
@@ -33,7 +33,6 @@ generate-setup-file = true
 python = "^3.11.5"
 word2number = "*"
 dateparser = "*"
-openai = "*"
 
 [tool.poetry.dev-dependencies]
 autopep8 = "*"
