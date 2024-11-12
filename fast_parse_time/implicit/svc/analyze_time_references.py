@@ -3,18 +3,17 @@
 """ Analyze Time References in Text """
 
 
-from baseblock import Stopwatch
-from baseblock import BaseObject
 from typing import Optional
 from baseblock import ServiceEventGenerator
 
+from fast_parse_time.core import configure_logger, Stopwatch
 from fast_parse_time.implicit.dmo import DigitTextReplacer
 from fast_parse_time.implicit.dmo import KeywordSequenceFilter
 from fast_parse_time.implicit.dmo import KeywordSequenceExtractor
 from fast_parse_time.implicit.dmo import SequenceSolutionFinder
 
 
-class AnalyzeTimeReferences(BaseObject):
+class AnalyzeTimeReferences(object):
     """ Analyze Time References in Text """
 
     def __init__(self):
@@ -24,7 +23,7 @@ class AnalyzeTimeReferences(BaseObject):
             10-Aug-2022
             craigtrim@gmail.com
         """
-        BaseObject.__init__(self, __name__)
+        self.logger = configure_logger(__name__)
         self._generate_event = ServiceEventGenerator().process
 
         self._digit_replacer = DigitTextReplacer().process
@@ -57,23 +56,23 @@ class AnalyzeTimeReferences(BaseObject):
 
         # COR-80; Generate an Event Record
         d_event = self._generate_event(
-            service_name=self.component_name(),
+            service_name=__name__,
             event_name='analyze-time-references',
             stopwatch=sw,
             data=d_result)
 
-        if self.isEnabledForDebug:
-            if not d_result['solutions'] or not len(d_result['solutions']):
-                self.logger.debug('\n'.join([
-                    'No Solutions Found',
-                    f'\tTotal Time: {str(sw)}',
-                    f'\tInput Text: {input_text}']))
-            else:
-                self.logger.debug('\n'.join([
-                    'Time Reference Solutions Found',
-                    f'\tTotal Time: {str(sw)}',
-                    f'\tInput Text: {input_text}',
-                    f"\tTotal Solutions: {len(d_result['solutions'])}"]))
+        if not d_result['solutions'] or not len(d_result['solutions']):
+            self.logger.debug('\n'.join([
+                'No Solutions Found',
+                f'\tTotal Time: {str(sw)}',
+                f'\tInput Text: {input_text}']))
+
+        else:
+            self.logger.debug('\n'.join([
+                'Time Reference Solutions Found',
+                f'\tTotal Time: {str(sw)}',
+                f'\tInput Text: {input_text}',
+                f"\tTotal Solutions: {len(d_result['solutions'])}"]))
 
         return {
             'result': d_result['solutions'],

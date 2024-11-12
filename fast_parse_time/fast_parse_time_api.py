@@ -3,14 +3,11 @@
 """ NLP API for Parsing Dates of all Kinds """
 
 
-from baseblock import BaseObject
-from typing import Dict, Optional
-
 from fast_parse_time.explicit.dto import DateType
 from fast_parse_time.explicit.bp import ExplicitTimeExtractor
 
 
-class FastParseTimeAPI(BaseObject):
+class FastParseTimeAPI(object):
     """ NLP API for Parsing Dates of all Kinds """
 
     def __init__(self):
@@ -21,9 +18,9 @@ class FastParseTimeAPI(BaseObject):
             craigtrim@gmail.com
             *   https://github.com/craigtrim/fast-parse-time/issues/1
         """
-        BaseObject.__init__(self, __name__)
+        pass
 
-    def extract_numeric_dates(input_text: str) -> Optional[Dict[str, DateType]]:
+    def extract_numeric_dates(input_text: str) -> dict[str, DateType] | None:
         """
         Extracts numeric dates from the given input text.
 

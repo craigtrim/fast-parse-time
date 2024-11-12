@@ -3,12 +3,10 @@
 """ Analyze Time References in Text """
 
 
-from baseblock import BaseObject
-
 from fast_parse_time.implicit.dto import d_keyterm_counter_kb
 
 
-class KeywordSequenceExtractor(BaseObject):
+class KeywordSequenceExtractor(object):
     """ Extract Keyword Sequences
 
     This is an extraction and correlation of contiguous time sequences within text
@@ -29,7 +27,6 @@ class KeywordSequenceExtractor(BaseObject):
             10-Aug-2022
             craigtrim@gmail.com
         """
-        BaseObject.__init__(self, __name__)
         self._keyterms = set(d_keyterm_counter_kb.keys())
 
     def process(self,

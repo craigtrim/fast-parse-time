@@ -6,11 +6,10 @@
 from datetime import datetime
 from datetime import timedelta
 
-from baseblock import Stopwatch
-from baseblock import BaseObject
+from fast_parse_time.core import configure_logger, Stopwatch
 
 
-class ResolveTimeReferences(BaseObject):
+class ResolveTimeReferences(object):
     """ Resolve Time Solutions Located in the Text """
 
     def __init__(self):
@@ -20,7 +19,7 @@ class ResolveTimeReferences(BaseObject):
             10-Aug-2022
             craigtrim@gmail.com
         """
-        BaseObject.__init__(self, __name__)
+        self.logger = configure_logger(__name__)
 
     @staticmethod
     def _get_timedelta(solution: list) -> timedelta:
@@ -66,7 +65,7 @@ class ResolveTimeReferences(BaseObject):
 
     def process(self,
                 solutions: list,
-                current_time: datetime) -> str or None:
+                current_time: datetime) -> str | None:
 
         sw = Stopwatch()
 
@@ -76,12 +75,11 @@ class ResolveTimeReferences(BaseObject):
         new_time = self._process(solutions=solutions,
                                  current_time=current_time)
 
-        if self.isEnabledForDebug:
-            self.logger.debug('\n'.join([
-                'Time Resolution Completd',
-                f'\tTotal Time: {str(sw)}',
-                f'\tTotal Solutions:  {len(solutions)}',
-                f'\tInput Time: {current_time}',
-                f'\tOutput Time: {new_time}']))
+        self.logger.debug('\n'.join([
+            'Time Resolution Completd',
+            f'\tTotal Time: {str(sw)}',
+            f'\tTotal Solutions:  {len(solutions)}',
+            f'\tInput Time: {current_time}',
+            f'\tOutput Time: {new_time}']))
 
         return new_time

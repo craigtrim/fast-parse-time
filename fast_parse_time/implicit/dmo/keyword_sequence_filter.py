@@ -3,12 +3,10 @@
 """ Filter Sequences for Invalid Keys """
 
 
-from baseblock import BaseObject
-
 from fast_parse_time.implicit.dto import d_index_by_slot_kb
 
 
-class KeywordSequenceFilter(BaseObject):
+class KeywordSequenceFilter(object):
     """ Filter Sequences for Invalid Keys
 
     Sample Input Text:
@@ -37,7 +35,7 @@ class KeywordSequenceFilter(BaseObject):
             10-Aug-2022
             craigtrim@gmail.com
         """
-        BaseObject.__init__(self, __name__)
+        pass
 
     def process(self,
                 sequences: list) -> list:

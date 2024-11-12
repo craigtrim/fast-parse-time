@@ -3,12 +3,10 @@
 """ Pre-Classify Text for Explicit Dates """
 
 
-from typing import List
-from baseblock import BaseObject, Enforcer
 from fast_parse_time.explicit.dto import date_delims
 
 
-class PreClassifyNumericComponents(BaseObject):
+class PreClassifyNumericComponents(object):
     """ Pre-Classify Text for Explicit Dates
 
     This Component won't classify the specific type of explicit date in the text
@@ -22,7 +20,7 @@ class PreClassifyNumericComponents(BaseObject):
             8-Apr-2024
             craigtrim@gmail.com
         """
-        BaseObject.__init__(self, __name__)
+        pass
 
     def process(self,
                 input_text: str) -> bool:
@@ -35,10 +33,8 @@ class PreClassifyNumericComponents(BaseObject):
         Returns:
             bool: True if the input text contains numeric components, False otherwise.
         """
-        if self.isEnabledForDebug:
-            Enforcer.is_str(input_text)
 
-        input_tokens: List[str] = input_text.split()
+        input_tokens: list[str] = input_text.split()
         for input_token in input_tokens:
 
             for date_delim in date_delims:

@@ -5,10 +5,8 @@
 
 from word2number import w2n
 
-from baseblock import BaseObject
 
-
-class DigitTextReplacer(BaseObject):
+class DigitTextReplacer(object):
     """ Replace Spelled-Out forms of Numbers with their Digits
 
     e.g., 'three' => 3
@@ -21,7 +19,7 @@ class DigitTextReplacer(BaseObject):
             11-Aug-2022
             craigtrim@gmail.com
         """
-        BaseObject.__init__(self, __name__)
+        pass
 
     def process(self,
                 tokens: list) -> list:

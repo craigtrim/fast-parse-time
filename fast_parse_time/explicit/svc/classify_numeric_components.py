@@ -3,13 +3,11 @@
 """ Classify Date/Time Extracted Comopnents """
 
 
-from typing import List, Dict, Optional
-from baseblock import BaseObject, Enforcer
 from fast_parse_time.explicit.dmo import DelimitedDateClassifier
 from fast_parse_time.explicit.dto import DateType, date_delims, MIN_YEAR, MAX_YEAR
 
 
-class ClassifyNumericComponents(BaseObject):
+class ClassifyNumericComponents(object):
     """ Classify Date/Time Extracted Components """
 
     __delimited_classifer: DelimitedDateClassifier = None
@@ -21,10 +19,10 @@ class ClassifyNumericComponents(BaseObject):
             8-Apr-2024
             craigtrim@gmail.com
         """
-        BaseObject.__init__(self, __name__)
+        pass
 
     def _classify_date_type(self,
-                            input_text: str) -> Optional[DateType]:
+                            input_text: str) -> DateType | None:
 
         _date_delims = [
             date_delim for date_delim in date_delims
@@ -50,7 +48,7 @@ class ClassifyNumericComponents(BaseObject):
                     pass
                 return False
 
-            input_tokens: List[str] = input_text.split('-')
+            input_tokens: list[str] = input_text.split('-')
             input_tokens = [
                 is_valid_year(input_token)
                 for input_token in input_tokens
@@ -60,12 +58,9 @@ class ClassifyNumericComponents(BaseObject):
                 return DateType.YEAR_RANGE
 
     def process(self,
-                input_tokens: List[str]) -> Optional[Dict[str, DateType]]:
+                input_tokens: list[str]) -> dict[str, DateType] | None:
 
-        if self.isEnabledForDebug:
-            Enforcer.is_list_of_str(input_tokens)
-
-        d: Dict[str, DateType] = {}
+        d: dict[str, DateType] = {}
         for input_token in input_tokens:
             date_type = self._classify_date_type(input_token)
             if date_type:

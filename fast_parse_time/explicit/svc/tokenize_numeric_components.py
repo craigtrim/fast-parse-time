@@ -3,12 +3,10 @@
 """ Extract Elements in Text that are Date-Related """
 
 
-from typing import List, Optional
-from baseblock import BaseObject, Enforcer
 from fast_parse_time.explicit.dto import date_delims, MIN_YEAR, MAX_YEAR
 
 
-class TokenizeNumericComponents(BaseObject):
+class TokenizeNumericComponents(object):
     """ Extract Elements in Text that are Date-Related """
 
     def __init__(self):
@@ -18,7 +16,7 @@ class TokenizeNumericComponents(BaseObject):
             8-Apr-2024
             craigtrim@gmail.com
         """
-        BaseObject.__init__(self, __name__)
+        pass
 
     def _is_valid_token(self, input_token: str) -> bool:
         """
@@ -72,7 +70,7 @@ class TokenizeNumericComponents(BaseObject):
         ]) == len(input_tokens)
 
     def process(self,
-                input_text: str) -> Optional[List[str]]:
+                input_text: str) -> list[str] | None:
         """
         Process the input text and check if it contains any numeric components.
 
@@ -82,13 +80,11 @@ class TokenizeNumericComponents(BaseObject):
         Returns:
             bool: True if the input text contains numeric components, False otherwise.
         """
-        if self.isEnabledForDebug:
-            Enforcer.is_str(input_text)
 
-        input_tokens: List[str] = input_text.split()
+        input_tokens: list[str] = input_text.split()
 
         # preserve input ordering, so avoid sets
-        values: List[str] = []
+        values: list[str] = []
 
         for input_token in input_tokens:
 
