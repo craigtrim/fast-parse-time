@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+# -*- coding: UTF-8 -*-
+
+
 from enum import Enum, auto
 from datetime import datetime
 from typing import Optional

@@ -4,10 +4,9 @@
 
 
 from typing import List
-from baseblock import BaseObject
 
 
-class DayMonthValidator(BaseObject):
+class DayMonthValidator(object):
     """ Validate DAY_MONTH Patterns """
 
     def __init__(self):
@@ -17,7 +16,7 @@ class DayMonthValidator(BaseObject):
             8-Apr-2024
             craigtrim@gmail.com
         """
-        BaseObject.__init__(self, __name__)
+        pass
 
     def process(self, month: int, day_of_month: int) -> bool:
         """

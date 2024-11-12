@@ -5,12 +5,10 @@
 
 import dateparser
 from datetime import datetime
-from baseblock import BaseObject
-from typing import List, Optional
 from fast_parse_time.explicit.dto import DateType, DateComponentType,  MIN_YEAR, MAX_YEAR
 
 
-class DelimitedDateClassifier(BaseObject):
+class DelimitedDateClassifier(object):
     """ Classify Delimited Numerical Dates """
 
     def __init__(self):
@@ -20,15 +18,15 @@ class DelimitedDateClassifier(BaseObject):
             8-Apr-2024
             craigtrim@gmail.com
         """
-        BaseObject.__init__(self, __name__)
+        pass
 
-    def _parse_datetime(self, input_text: str) -> Optional[str]:
+    def _parse_datetime(self, input_text: str) -> str | None:
         result: datetime = dateparser.parse(input_text)
         if result:
             return result.strftime('%Y-%m-%d')
 
     def _classify_token(self,
-                        input_text: str) -> Optional[DateComponentType]:
+                        input_text: str) -> DateComponentType | None:
         try:
             n = int(input_text)
         except ValueError:
@@ -44,7 +42,7 @@ class DelimitedDateClassifier(BaseObject):
         if 1 <= n <= 12:
             return DateComponentType.DAY_OR_MONTH
 
-    def _normalize_date_components(self, date_component_types: List[DateComponentType]):
+    def _normalize_date_components(self, date_component_types: list[DateComponentType]):
         """
         Normalize the date components based on the given list of date component types.
 
@@ -127,7 +125,7 @@ class DelimitedDateClassifier(BaseObject):
 
     def _process(self,
                  input_text: str,
-                 delimiter: str) -> Optional[DateType]:
+                 delimiter: str) -> DateType | None:
 
         total_delimiters = input_text.count(delimiter)
         if total_delimiters == 0 or total_delimiters >= 3:
@@ -139,11 +137,11 @@ class DelimitedDateClassifier(BaseObject):
         if total_delimiters == 2:
             return DateType.FULL_EXPLICIT_DATE
 
-        input_tokens: List[str] = input_text.split(delimiter)
+        input_tokens: list[str] = input_text.split(delimiter)
         if not input_tokens or not len(input_tokens):
             return None
 
-        date_component_types: List[Optional[DateComponentType]] = [
+        date_component_types: list[DateComponentType] | None = [
             self._classify_token(token)
             for token in input_tokens
         ]
@@ -151,14 +149,14 @@ class DelimitedDateClassifier(BaseObject):
         if not date_component_types or not len(date_component_types):
             return None
 
-        date_component_types: List[DateComponentType] = [
+        date_component_types: list[DateComponentType] = [
             token for token in date_component_types if token
         ]
 
         if not date_component_types or not len(date_component_types):
             return None
 
-        date_component_types: List[DateComponentType] = self._normalize_date_components(
+        date_component_types: list[DateComponentType] = self._normalize_date_components(
             date_component_types)
 
         # Year/Month
@@ -200,9 +198,9 @@ class DelimitedDateClassifier(BaseObject):
 
     def process(self,
                 input_text: str,
-                delimiter: str) -> Optional[DateType]:
+                delimiter: str) -> DateType | None:
 
-        result: Optional[DateType] = self._process(
+        result: DateType | None = self._process(
             input_text=input_text, delimiter=delimiter)
 
         if result and not isinstance(result, DateType):
