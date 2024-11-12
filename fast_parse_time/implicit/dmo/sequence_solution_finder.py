@@ -3,13 +3,11 @@
 """ Find Solutions for Sequences """
 
 
-from baseblock import BaseObject
-
 from fast_parse_time.implicit.dto import d_index_by_keyterm_kb
 from fast_parse_time.implicit.dto import d_index_by_slot_kb
 
 
-class SequenceSolutionFinder(BaseObject):
+class SequenceSolutionFinder(object):
     """ Find Solutions for Sequences """
 
     def __init__(self):
@@ -19,7 +17,7 @@ class SequenceSolutionFinder(BaseObject):
             10-Aug-2022
             craigtrim@gmail.com
         """
-        BaseObject.__init__(self, __name__)
+        pass
 
     @staticmethod
     def _intersection(list_of_sets: list) -> set:

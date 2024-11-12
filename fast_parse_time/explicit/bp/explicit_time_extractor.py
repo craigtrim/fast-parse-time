@@ -3,9 +3,7 @@
 """ NLP API for Parsing Dates of all Kinds """
 
 
-from typing import List, Dict, Optional
-from baseblock import BaseObject, Stopwatch
-
+from fast_parse_time.core import configure_logger, Stopwatch
 from fast_parse_time.explicit.dto import DateType
 from fast_parse_time.explicit.svc import (
     PreClassifyNumericComponents,
@@ -15,7 +13,7 @@ from fast_parse_time.explicit.svc import (
 )
 
 
-class ExplicitTimeExtractor(BaseObject):
+class ExplicitTimeExtractor(object):
     """ NLP API for Parsing Dates of all Kinds """
 
     __preclassify_numeric: PreClassifyNumericComponents = None
@@ -31,9 +29,9 @@ class ExplicitTimeExtractor(BaseObject):
             craigtrim@gmail.com
             *   https://github.com/craigtrim/fast-parse-time/issues/1
         """
-        BaseObject.__init__(self, __name__)
+        self.logger = configure_logger(__name__)
 
-    def extract_numeric_dates(self, input_text: str) -> Dict[str, DateType]:
+    def extract_numeric_dates(self, input_text: str) -> dict[str, DateType]:
         """
         Extracts numeric dates from the given input text.
 
@@ -54,18 +52,16 @@ class ExplicitTimeExtractor(BaseObject):
         if not self.__tokenize_numeric:
             self.__tokenize_numeric = TokenizeNumericComponents()
 
-        date_tokens: Optional[
-            List[str]
-        ] = self.__tokenize_numeric.process(input_text)
+        date_tokens: list[str] | None = \
+            self.__tokenize_numeric.process(input_text)
         if not date_tokens or not len(date_tokens):
             return None
 
         if not self.__classify_numeric:
             self.__classify_numeric = ClassifyNumericComponents()
 
-        d_classified_dates: Optional[
-            Dict[str, DateType]
-        ] = self.__classify_numeric.process(date_tokens)
+        d_classified_dates: dict[str, DateType] | None = \
+            self.__classify_numeric.process(date_tokens)
 
         if not d_classified_dates or not len(d_classified_dates):
             return None
@@ -73,15 +69,13 @@ class ExplicitTimeExtractor(BaseObject):
         if not self.__validate_numeric:
             self.__validate_numeric = ValidateNumericComponents()
 
-        d_classified_dates: Optional[
-            Dict[str, DateType]
-        ] = self.__validate_numeric.process(d_classified_dates)
+        d_classified_dates: dict[str, DateType] | None = \
+            self.__validate_numeric.process(d_classified_dates)
 
         if not d_classified_dates or not len(d_classified_dates):
             return None
 
-        if self.isEnabledForInfo:
-            self.logger.info(
-                f"Date Classification for '{input_text}' is {d_classified_dates} in {str(sw)}")
+        self.logger.info(
+            f"Date Classification for '{input_text}' is {d_classified_dates} in {str(sw)}")
 
         return d_classified_dates
