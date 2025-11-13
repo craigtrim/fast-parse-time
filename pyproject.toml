@@ -9,7 +9,7 @@ maintainers = [
 ]
 
 description = "Natural Language (NLP) Extraction of Date and Time"
-license = "None"
+license = "MIT"
 name = "fast-parse-time"
 readme = "README.md"
 version = "0.1.15"

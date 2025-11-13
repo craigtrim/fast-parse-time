@@ -2,7 +2,7 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/fast-parse-time.svg)](https://pypi.org/project/fast-parse-time/)
 [![Python Version](https://img.shields.io/pypi/pyversions/fast-parse-time.svg)](https://pypi.org/project/fast-parse-time/)
-[![License](https://img.shields.io/badge/license-None-lightgrey.svg)](https://github.com/craigtrim/fast-parse-time)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Build Status](https://github.com/craigtrim/fast-parse-time/workflows/Upload%20Python%20Package/badge.svg)](https://github.com/craigtrim/fast-parse-time/actions)
 
 Natural Language Processing (NLP) library for extracting dates and times from text.
