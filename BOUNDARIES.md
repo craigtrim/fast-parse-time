@@ -2,7 +2,7 @@
 
 ## Philosophy
 
-Every software system has boundaries. This is not a limitation to apologize for—it's an inherent property of design.
+Every software system has boundaries. This is not a limitation to apologize for.  It's an inherent property of design.
 
 When we discover a boundary, we face a choice:
 1. **Expand the system** to handle the edge case
@@ -27,7 +27,7 @@ extract_numeric_dates("Dates: 12/31/2023, 01-15-2024, 02.14.2024")
 # Missing: 12/31/2023 and 01-15-2024
 ```
 
-**Rationale**: Tokenizer optimization—processing one delimiter pattern at a time simplifies parsing and reduces false positives.
+**Rationale**: Tokenizer optimization.  Processing one delimiter pattern at a time simplifies parsing and reduces false positives.
 
 **Workaround**: Process text multiple times with different expected formats, or normalize delimiters before extraction.
 
