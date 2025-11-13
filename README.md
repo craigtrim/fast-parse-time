@@ -88,9 +88,20 @@ pre-commit install
 pre-commit run --all-files
 ```
 
+## Known Limitations
+
+This library has well-defined boundaries by design. See [BOUNDARIES.md](BOUNDARIES.md) for a detailed explanation of system limits, including:
+
+- Single delimiter type per extraction
+- Whitespace boundary requirements
+- No embedded date extraction from filenames or codes
+- Context-free parsing approach
+
+These are **intentional design decisions** that keep the library focused and maintainable.
+
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please feel free to submit a Pull Request. Before reporting a limitation as a bug, check [BOUNDARIES.md](BOUNDARIES.md) to see if it's a documented boundary.
 
 ## Issues
 
