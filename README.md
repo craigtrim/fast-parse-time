@@ -5,7 +5,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Build Status](https://github.com/craigtrim/fast-parse-time/workflows/Upload%20Python%20Package/badge.svg)](https://github.com/craigtrim/fast-parse-time/actions)
 
-Natural Language Processing (NLP) library for extracting dates and times from text.
+Extract dates and times from unstructured text with minimal overhead. Parse explicit dates like `04/08/2024` or `3/24`, interpret relative expressions like `5 days ago` or `last couple of weeks`, and identify ambiguous formats that need clarification.
+
+Built for production use cases where you need reliable extraction without the complexity of full NLP pipelines. While LLMs can extract temporal information, this library provides deterministic results with zero API costs and sub-millisecond performance. The focus is on clear boundaries and predictable behavior rather than attempting to handle every edge case.
 
 ## Features
 

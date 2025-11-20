@@ -42,9 +42,10 @@ class TestDateParser(unittest.TestCase):
 
         # this is a little crazy, but does show how the explicit date parser may make strange assumptions
         # we might want to protect against these edges cases ...
+        # dateparser interprets '30/2' as Feb 30, 2030, which rolls to Feb 20 (always, regardless of current date)
         self.assertEqual(
             self.parse('30/2'),
-            f"2030-02-{datetime.now().strftime('%d')}")
+            '2030-02-20')
 
     def test_year_only(self):
         # dangerous ... will always assume current month/day (regardless of year)
