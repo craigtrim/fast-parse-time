@@ -3,112 +3,118 @@
 [![PyPI version](https://img.shields.io/pypi/v/fast-parse-time.svg)](https://pypi.org/project/fast-parse-time/)
 [![Python Version](https://img.shields.io/pypi/pyversions/fast-parse-time.svg)](https://pypi.org/project/fast-parse-time/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Build Status](https://github.com/craigtrim/fast-parse-time/workflows/Upload%20Python%20Package/badge.svg)](https://github.com/craigtrim/fast-parse-time/actions)
 
-Extract dates and times from unstructured text with minimal overhead. Parse explicit dates like `04/08/2024` or `3/24`, interpret relative expressions like `5 days ago` or `last couple of weeks`, and identify ambiguous formats that need clarification.
+Extract dates and times from text. Fast, deterministic, zero cost.
 
-Built for production use cases where you need reliable extraction without the complexity of full NLP pipelines. While LLMs can extract temporal information, this library provides deterministic results with zero API costs and sub-millisecond performance. The focus is on clear boundaries and predictable behavior rather than attempting to handle every edge case.
+## Why?
 
-## Features
+LLMs can parse dates, but they're slow, expensive, and non-deterministic. This library gives you:
 
-- **Explicit Date Extraction**: Parse numeric dates in multiple formats (`04/08/2024`, `3/24`, `06-05-2016`)
-- **Implicit Time References**: Extract relative time expressions (`5 days ago`, `last couple of weeks`, `30 minutes ago`)
-- **Multiple Delimiters**: Supports `/`, `-`, and `.` separators
-- **Ambiguity Detection**: Identifies ambiguous date formats (e.g., `4/8` could be April 8th or August 4th)
-- **Temporal Analysis**: Extracts cardinality, time frame, and tense from natural language
+- **Sub-millisecond performance** - Process thousands of documents per second
+- **Zero API costs** - No per-request charges
+- **Deterministic results** - Same input always produces same output
+- **Simple API** - One function call, everything extracted
 
-## Installation
+## Install
 
 ```bash
 pip install fast-parse-time
 ```
 
-## Quick Start
-
-### Extract Numeric Dates
+## Usage
 
 ```python
-from fast_parse_time import extract_numeric_dates
+from fast_parse_time import parse_dates
 
-# Extract explicit dates from text
-result = extract_numeric_dates("The event is scheduled for 04/08/2024")
-# Returns: {'04/08/2024': 'FULL_EXPLICIT_DATE'}
+text = "Meeting on 04/08/2024 to discuss issues from 5 days ago"
+result = parse_dates(text)
 
-result = extract_numeric_dates("Meeting on 3/24")
-# Returns: {'3/24': 'MONTH_DAY'}
+# Explicit dates found in text
+print(result.explicit_dates)
+# [ExplicitDate(text='04/08/2024', date_type='FULL_EXPLICIT_DATE')]
+
+# Relative time expressions
+print(result.relative_times)
+# [RelativeTime(cardinality=5, frame='day', tense='past')]
+
+# Convert to Python datetime
+for time_ref in result.relative_times:
+    print(time_ref.to_datetime())
+    # datetime.datetime(2025, 11, 14, ...)
 ```
 
-### Analyze Time References
+## What It Extracts
+
+**Explicit dates:**
+```python
+"Event on 04/08/2024"          → 04/08/2024 (full date)
+"Meeting scheduled for 3/24"   → 3/24 (month/day)
+"Copyright 2024"               → 2024 (year only)
+"Ambiguous: 4/8"               → 4/8 (flagged as ambiguous)
+```
+
+**Relative times:**
+```python
+"5 days ago"                   → 5 days (past)
+"last couple of weeks"         → 2 weeks (past)
+"30 minutes ago"               → 30 minutes (past)
+```
+
+## Examples
+
+### Parse everything at once
 
 ```python
-from fast_parse_time.implicit.svc import AnalyzeTimeReferences
+result = parse_dates("Report from 04/08/2024 covering issues from last week")
 
-analyzer = AnalyzeTimeReferences()
-
-# Extract relative time references
-result = analyzer.process("show me all history from 5 days ago")
-# Returns: {'result': [{'Cardinality': 5, 'Frame': 'day', 'Tense': 'past'}]}
-
-result = analyzer.process("the explosion happened 5 minutes ago")
-# Returns: {'result': [{'Cardinality': 5, 'Frame': 'minute', 'Tense': 'past'}]}
-
-result = analyzer.process("show me records from the last couple of weeks")
-# Returns: {'result': [{'Cardinality': 2, 'Frame': 'week', 'Tense': 'past'}]}
+result.explicit_dates  # ['04/08/2024']
+result.relative_times  # [RelativeTime(cardinality=1, frame='week', tense='past')]
 ```
 
-## Development
+### Just get dates
 
-### Setup
+```python
+from fast_parse_time import extract_explicit_dates
 
-```bash
-# Clone the repository
-git clone https://github.com/craigtrim/fast-parse-time.git
-cd fast-parse-time
-
-# Install dependencies
-pip install -r requirements.txt
-# or with poetry
-poetry install
+dates = extract_explicit_dates("Event on 04/08/2024 or maybe 3/24")
+# {'04/08/2024': 'FULL_EXPLICIT_DATE', '3/24': 'MONTH_DAY'}
 ```
 
-### Running Tests
+### Convert to datetime objects
 
-```bash
-# Run all tests
-pytest
+```python
+from fast_parse_time import resolve_to_datetime
 
-# Run specific test file
-pytest tests/test_extract_numeric_dates_01.py
+datetimes = resolve_to_datetime("Show me data from 5 days ago")
+# [datetime.datetime(2025, 11, 14, ...)]
 ```
 
-### Pre-commit Hooks
+## Features
 
-This project uses pre-commit hooks for code quality:
+- Multiple date formats: `04/08/2024`, `3/24`, `2024-06-05`
+- Multiple delimiters: `/`, `-`, `.`
+- Relative time expressions: "5 days ago", "last week", "couple of months ago"
+- Ambiguity detection: Flags dates like `4/8` that could be April 8 or August 4
+- Time frame support: seconds, minutes, hours, days, weeks, months, years
 
-```bash
-pre-commit install
-pre-commit run --all-files
-```
+## Documentation
 
-## Known Limitations
+- [Complete API Reference](docs/API.md)
+- [System Boundaries](BOUNDARIES.md) - Design decisions and limitations
+- [Examples](docs/API.md#examples)
 
-This library has well-defined boundaries by design. See [BOUNDARIES.md](BOUNDARIES.md) for a detailed explanation of system limits, including:
+## Performance
 
-- Single delimiter type per extraction
-- Whitespace boundary requirements
-- No embedded date extraction from filenames or codes
-- Context-free parsing approach
+Typical extraction takes < 1ms per document. No network calls, no model inference, pure Python.
 
-These are **intentional design decisions** that keep the library focused and maintainable.
+## License
 
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request. Before reporting a limitation as a bug, check [BOUNDARIES.md](BOUNDARIES.md) to see if it's a documented boundary.
-
-## Issues
-
-Report bugs and feature requests at the [issue tracker](https://github.com/craigtrim/fast-parse-time/issues).
+MIT - See [LICENSE](LICENSE) for details.
 
 ## Author
 
 **Craig Trim** - [craigtrim@gmail.com](mailto:craigtrim@gmail.com)
+
+---
+
+[Report Issues](https://github.com/craigtrim/fast-parse-time/issues) | [API Docs](docs/API.md) | [PyPI](https://pypi.org/project/fast-parse-time/)
