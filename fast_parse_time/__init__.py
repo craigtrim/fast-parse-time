@@ -92,5 +92,3 @@ __all__ = [
     'extract_numeric_dates',
     'ExplicitTimeExtractor',
 ]
-
-__version__ = '1.1.0'
