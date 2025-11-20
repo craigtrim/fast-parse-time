@@ -2,6 +2,7 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/fast-parse-time.svg)](https://pypi.org/project/fast-parse-time/)
 [![Python Version](https://img.shields.io/pypi/pyversions/fast-parse-time.svg)](https://pypi.org/project/fast-parse-time/)
+[![Downloads](https://pepy.tech/badge/fast-parse-time/month)](https://pepy.tech/project/fast-parse-time)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Extract dates and times from text. Fast, deterministic, zero cost.
