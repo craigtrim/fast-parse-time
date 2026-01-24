@@ -6482,4 +6482,12 @@ d_index_by_slot_kb = {
  'past wk': {'Cardinality': 1, 'Frame': 'week', 'Tense': 'past'},
  'past year': {'Cardinality': 1, 'Frame': 'year', 'Tense': 'past'},
  "past year's": {'Cardinality': 1, 'Frame': 'year', 'Tense': 'past'},
- 'past yr': {'Cardinality': 1, 'Frame': 'year', 'Tense': 'past'}}
+ 'past yr': {'Cardinality': 1, 'Frame': 'year', 'Tense': 'past'},
+ 'today': {'Cardinality': 0, 'Frame': 'day', 'Tense': 'present'},
+ 'tomorrow': {'Cardinality': 1, 'Frame': 'day', 'Tense': 'future'},
+ 'yesterday': {'Cardinality': 1, 'Frame': 'day', 'Tense': 'past'},
+ 'tonight': {'Cardinality': 0, 'Frame': 'day', 'Tense': 'present'},
+ 'this morning': {'Cardinality': 0, 'Frame': 'day', 'Tense': 'present'},
+ 'this afternoon': {'Cardinality': 0, 'Frame': 'day', 'Tense': 'present'},
+ 'this evening': {'Cardinality': 0, 'Frame': 'day', 'Tense': 'present'},
+ 'last night': {'Cardinality': 1, 'Frame': 'day', 'Tense': 'past'}}

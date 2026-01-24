@@ -381,7 +381,7 @@ d_keyterm_counter_kb = {
  'hr': 12,
  'hrs': 192,
  'in': 1052,
- 'last': 2083,
+ 'last': 2084,
  'later': 20,
  'min': 12,
  'mins': 480,
@@ -413,4 +413,13 @@ d_keyterm_counter_kb = {
  "year's": 12,
  'years': 800,
  'yr': 12,
- 'yrs': 800}
+ 'yrs': 800,
+ 'today': 1,
+ 'tomorrow': 1,
+ 'yesterday': 1,
+ 'tonight': 1,
+ 'this': 3,
+ 'morning': 1,
+ 'afternoon': 1,
+ 'evening': 1,
+ 'night': 1}
