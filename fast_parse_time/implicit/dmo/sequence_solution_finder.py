@@ -41,5 +41,11 @@ class SequenceSolutionFinder(object):
             candidates = self._intersection(sets)
             if len(candidates) == 1:
                 solutions.append(d_index_by_slot_kb[list(candidates)[0]])
+            elif len(candidates) > 1:
+                # Handle ambiguity: prefer exact sequence match
+                # e.g., ['last', 'week'] matches 'last week' over 'last 1 week'
+                exact_match = ' '.join(sequence)
+                if exact_match in candidates:
+                    solutions.append(d_index_by_slot_kb[exact_match])
 
         return solutions
