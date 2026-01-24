@@ -12,12 +12,20 @@ class DigitTextReplacer(object):
     e.g., 'three' => 3
     """
 
+    # Indefinite articles that imply cardinality of 1
+    INDEFINITE_ARTICLES = {'a', 'an'}
+
     def __init__(self):
         """ Change Log
 
         Created:
             11-Aug-2022
             craigtrim@gmail.com
+        Updated:
+            23-Jan-2026
+            craigtrim@gmail.com
+            *   Handle indefinite articles 'a' and 'an' as 1
+                https://github.com/craigtrim/fast-parse-time/issues/4
         """
         pass
 
@@ -26,9 +34,13 @@ class DigitTextReplacer(object):
         normalized = []
 
         for token in tokens:
-            try:
-                normalized.append(str(w2n.word_to_num(token)))
-            except ValueError:
-                normalized.append(token)
+            # Handle indefinite articles as 1
+            if token in self.INDEFINITE_ARTICLES:
+                normalized.append('1')
+            else:
+                try:
+                    normalized.append(str(w2n.word_to_num(token)))
+                except ValueError:
+                    normalized.append(token)
 
-        return tokens
+        return normalized
