@@ -144,9 +144,10 @@ def extract_explicit_dates(text: str) -> Dict[str, str]:
     Extract explicit/numeric dates from text.
 
     Finds dates in formats like:
-    - Full dates: 04/08/2024, 06-05-2016
+    - Full dates: 04/08/2024, 06-05-2016, March 15, 2024
     - Partial dates: 3/24, 12/2023
     - Ambiguous dates: 4/8 (could be April 8 or August 4)
+    - Written month formats: March 15, 2024, 15 March 2024, Mar 15, 2024
 
     Args:
         text: Input text to parse
@@ -158,9 +159,22 @@ def extract_explicit_dates(text: str) -> Dict[str, str]:
     Example:
         >>> extract_explicit_dates("Event on 04/08/2024")
         {'04/08/2024': 'FULL_EXPLICIT_DATE'}
+        >>> extract_explicit_dates("Event on March 15, 2024")
+        {'March 15, 2024': 'FULL_EXPLICIT_DATE'}
     """
-    result = ExplicitTimeExtractor().extract_numeric_dates(input_text=text)
-    return result if result is not None else {}
+    extractor = ExplicitTimeExtractor()
+
+    # Try numeric dates first
+    result = extractor.extract_numeric_dates(input_text=text)
+    if result is None:
+        result = {}
+
+    # Also try written month formats
+    written_result = extractor.extract_written_dates(input_text=text)
+    if written_result:
+        result.update(written_result)
+
+    return result
 
 
 def extract_relative_times(text: str) -> List[RelativeTime]:
