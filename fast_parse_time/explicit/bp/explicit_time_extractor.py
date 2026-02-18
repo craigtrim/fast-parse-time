@@ -250,6 +250,46 @@ class ExplicitTimeExtractor(object):
 
         return result if result else None
 
+    def extract_iso8601_dates(self, input_text: str) -> dict[str, DateType]:
+        """
+        Extract date portions from ISO 8601 datetime strings.
+
+        Handles all standard ISO 8601 / RFC 3339 datetime formats:
+        - YYYY-MM-DDThh:mm:ssZ
+        - YYYY-MM-DDThh:mm:ss+HH:MM
+        - YYYY-MM-DDThh:mm:ss-HH:MM
+        - YYYY-MM-DDThh:mm:ss.NNNZ  (dot-decimal fractional seconds)
+        - YYYY-MM-DDThh:mm:ss,NNNZ  (comma-decimal fractional seconds)
+
+        Only the date component (YYYY-MM-DD) is extracted and returned.
+        The time, timezone, and fractional-second portions are discarded.
+
+        Args:
+            input_text (str): The input text to search.
+
+        Returns:
+            dict: Mapping of 'YYYY-MM-DD' strings to 'FULL_EXPLICIT_DATE', or None.
+
+        Related GitHub Issue:
+            #23 - Gap: ISO 8601 datetime strings not extracted
+            https://github.com/craigtrim/fast-parse-time/issues/23
+        """
+        if not input_text or not isinstance(input_text, str):
+            return None
+
+        _ISO_8601 = re.compile(
+            r'\b(\d{4}-\d{2}-\d{2})'   # date: YYYY-MM-DD
+            r'T\d{2}:\d{2}:\d{2}'      # time: Thh:mm:ss
+            r'(?:[.,]\d+)?'             # optional fractional seconds (. or ,)
+            r'(?:Z|[+-]\d{2}:\d{2})\b' # timezone: Z or ±HH:MM
+        )
+
+        matches = _ISO_8601.findall(input_text)
+        if not matches:
+            return None
+
+        return {date: DateType.FULL_EXPLICIT_DATE.name for date in matches}
+
     def extract_written_dates(self, input_text: str) -> dict[str, DateType]:
         """
         Extract dates with written month names (e.g., 'March 15, 2024').
