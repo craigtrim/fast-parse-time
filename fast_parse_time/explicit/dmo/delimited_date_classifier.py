@@ -3,9 +3,8 @@
 """ Classify Delimited Numerical Dates """
 
 
-import dateparser
-from datetime import datetime
 from fast_parse_time.explicit.dto import DateType, DateComponentType,  MIN_YEAR, MAX_YEAR
+from fast_parse_time.explicit.dmo.stdlib_date_validator import try_parse_date
 
 
 class DelimitedDateClassifier(object):
@@ -19,11 +18,6 @@ class DelimitedDateClassifier(object):
             craigtrim@gmail.com
         """
         pass
-
-    def _parse_datetime(self, input_text: str) -> str | None:
-        result: datetime = dateparser.parse(input_text)
-        if result:
-            return result.strftime('%Y-%m-%d')
 
     def _classify_token(self,
                         input_text: str) -> DateComponentType | None:
@@ -131,7 +125,7 @@ class DelimitedDateClassifier(object):
         if total_delimiters == 0 or total_delimiters >= 3:
             return None
 
-        if not self._parse_datetime(input_text):
+        if not try_parse_date(input_text):
             return None
 
         if total_delimiters == 2:
