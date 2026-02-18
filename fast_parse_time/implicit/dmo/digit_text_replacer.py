@@ -44,6 +44,22 @@ class DigitTextReplacer(object):
         ('half a day', '12 hours'),
     ]
 
+    # All time unit words recognized in compound expressions.
+    # Used to detect 'and' connectors between unit pairs for removal.
+    # Related GitHub Issue:
+    #     #20 - Gap: compound multi-unit expressions not supported
+    #     https://github.com/craigtrim/fast-parse-time/issues/20
+    COMPOUND_UNIT_WORDS = {
+        'second', 'seconds', 'sec', 'secs',
+        'minute', 'minutes', 'min', 'mins',
+        'hour', 'hours', 'hr', 'hrs',
+        'day', 'days',
+        'week', 'weeks', 'wk', 'wks',
+        'month', 'months', 'mo', 'mos',
+        'year', 'years', 'yr', 'yrs',
+        'decade', 'decades',
+    }
+
     # Singular abbreviated unit forms to normalize to plural when N > 1
     # e.g., '5 min ago' → '5 mins ago', '5 hr from now' → '5 hrs from now'
     # Related GitHub Issue:
@@ -95,6 +111,56 @@ class DigitTextReplacer(object):
                 https://github.com/craigtrim/fast-parse-time/issues/12
         """
         pass
+
+    def _remove_compound_and(self, tokens: list) -> list:
+        """Remove 'and' tokens that act as connectors between compound unit pairs.
+
+        In compound expressions like '1 year and 2 months ago', 'and' connects
+        adjacent N-unit pairs. Since 'and' is not a KB keyterm it breaks sequence
+        extraction, preventing compound detection. Removing it allows the sequence
+        extractor to keep the full compound as one continuous sequence.
+
+        Only removes 'and' when the preceding token is a time unit word and the
+        following token is a digit — this avoids removing 'and' from unrelated phrases.
+
+        Example:
+            ['1', 'year', 'and', '2', 'months', 'ago']
+            → ['1', 'year', '2', 'months', 'ago']
+
+        Related GitHub Issue:
+            #20 - Gap: compound multi-unit expressions not supported
+            https://github.com/craigtrim/fast-parse-time/issues/20
+        """
+        def _is_numeric(tok: str) -> bool:
+            return tok.isdigit() or ('.' in tok and tok.replace('.', '', 1).isdigit())
+
+        result = []
+        n = len(tokens)
+        for i, token in enumerate(tokens):
+            if token == 'and' and i >= 2 and i + 1 < n:
+                prev = tokens[i - 1]
+                prev_prev = tokens[i - 2]
+                # Only remove 'and' when pattern is: digit unit 'and' digit
+                # e.g., '1 year and 2 months' → remove; 'next week and 5 days' → keep
+                if (prev in self.COMPOUND_UNIT_WORDS
+                        and _is_numeric(prev_prev)
+                        and _is_numeric(tokens[i + 1])):
+                    continue  # skip this compound connector 'and'
+            result.append(token)
+        return result
+
+    def _strip_trailing_commas(self, tokens: list) -> list:
+        """Strip trailing commas from tokens.
+
+        Comma-separated compound expressions like '1 year, 2 months ago' produce
+        tokens with attached commas ('year,') after splitting. Stripping them allows
+        KB lookup to match 'year' as a keyterm.
+
+        Related GitHub Issue:
+            #20 - Gap: compound multi-unit expressions not supported
+            https://github.com/craigtrim/fast-parse-time/issues/20
+        """
+        return [t.rstrip(',') if t.endswith(',') else t for t in tokens]
 
     def _replace_phrases(self, tokens: list) -> list:
         """Replace multi-token phrases before individual token processing."""
@@ -186,6 +252,14 @@ class DigitTextReplacer(object):
 
     def process(self,
                 tokens: list) -> list:
+        # Strip trailing commas before any other processing
+        # (handles comma-separated compound expressions: '1 year, 2 months ago')
+        tokens = self._strip_trailing_commas(tokens)
+
+        # Remove 'and' connectors between compound unit pairs before phrase matching
+        # so they don't break sequence extraction: '1 year and 2 months ago'
+        tokens = self._remove_compound_and(tokens)
+
         # First, handle multi-token phrase replacements
         tokens = self._replace_phrases(tokens)
 
