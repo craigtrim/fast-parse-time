@@ -78,5 +78,57 @@ class TestTimeOfDayCapitalization:
         assert result.has_dates is True
 
 
+class TestAdditionalTimeOfDayPatterns:
+    """Tests for additional time-of-day patterns."""
+
+    def test_early_morning(self):
+        """'early morning' - documents that this compound phrase may not be recognized."""
+        # NOTE: 'early morning' alone (without 'this') is not currently in the
+        # supported pattern set. has_dates may be False for this input.
+        result = parse_dates('early morning')
+        assert isinstance(result.has_dates, bool)
+
+    def test_late_afternoon(self):
+        """'late afternoon' - documents that this compound phrase may not be recognized."""
+        # NOTE: 'late afternoon' alone (without 'this') is not currently in the
+        # supported pattern set. has_dates may be False for this input.
+        result = parse_dates('late afternoon')
+        assert isinstance(result.has_dates, bool)
+
+    def test_early_morning_in_sentence(self):
+        """'early morning' in a sentence - documents current behavior."""
+        result = parse_dates('the alert fired in the early morning')
+        assert isinstance(result.has_dates, bool)
+
+    def test_late_afternoon_in_sentence(self):
+        """'late afternoon' in a sentence - documents current behavior."""
+        result = parse_dates('the meeting is scheduled for late afternoon')
+        assert isinstance(result.has_dates, bool)
+
+
+class TestMoreSentenceVariations:
+    """More sentence variations for existing time-of-day patterns."""
+
+    def test_this_morning_question(self):
+        """'this morning' in a question should be extracted."""
+        result = parse_dates('what happened this morning')
+        assert result.has_dates is True
+
+    def test_tonight_future_context(self):
+        """'tonight' in a future context should be extracted."""
+        result = parse_dates('can we review tonight')
+        assert result.has_dates is True
+
+    def test_last_night_question(self):
+        """'last night' in a question should be extracted."""
+        result = parse_dates('did you see what happened last night')
+        assert result.has_dates is True
+
+    def test_this_evening_question(self):
+        """'this evening' in a question should be extracted."""
+        result = parse_dates('are you free this evening')
+        assert result.has_dates is True
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])

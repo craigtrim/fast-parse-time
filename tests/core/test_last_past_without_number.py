@@ -174,5 +174,117 @@ class TestPossessiveForms:
         assert result[0].tense == 'past'
 
 
+class TestLastHourMinuteSecond:
+    """Tests for 'last hour', 'last minute', 'last second' patterns."""
+
+    def test_last_hour(self):
+        """'last hour' should imply cardinality of 1 and frame of hour."""
+        result = parse_time_references('last hour')
+        assert len(result) == 1
+        assert result[0].cardinality == 1
+        assert result[0].frame == 'hour'
+        assert result[0].tense == 'past'
+
+    def test_last_minute(self):
+        """'last minute' should imply cardinality of 1 and frame of minute."""
+        result = parse_time_references('last minute')
+        assert len(result) == 1
+        assert result[0].cardinality == 1
+        assert result[0].frame == 'minute'
+        assert result[0].tense == 'past'
+
+    def test_last_second(self):
+        """'last second' should imply cardinality of 1 and frame of second."""
+        result = parse_time_references('last second')
+        assert len(result) == 1
+        assert result[0].cardinality == 1
+        assert result[0].frame == 'second'
+        assert result[0].tense == 'past'
+
+
+class TestPastYearDayHour:
+    """Tests for 'past year', 'past day', 'past hour' patterns."""
+
+    def test_past_year(self):
+        """'past year' should imply cardinality of 1 and frame of year."""
+        result = parse_time_references('past year')
+        assert len(result) == 1
+        assert result[0].cardinality == 1
+        assert result[0].frame == 'year'
+        assert result[0].tense == 'past'
+
+    def test_past_day(self):
+        """'past day' should imply cardinality of 1 and frame of day."""
+        result = parse_time_references('past day')
+        assert len(result) == 1
+        assert result[0].cardinality == 1
+        assert result[0].frame == 'day'
+        assert result[0].tense == 'past'
+
+    def test_past_hour(self):
+        """'past hour' should imply cardinality of 1 and frame of hour."""
+        result = parse_time_references('past hour')
+        assert len(result) == 1
+        assert result[0].cardinality == 1
+        assert result[0].frame == 'hour'
+        assert result[0].tense == 'past'
+
+
+class TestMoreSentenceContext:
+    """Additional sentence context tests."""
+
+    def test_last_day_in_sentence(self):
+        """'last day' embedded in a sentence should be extracted."""
+        result = parse_time_references('activity in the last day')
+        assert len(result) == 1
+        assert result[0].cardinality == 1
+        assert result[0].frame == 'day'
+        assert result[0].tense == 'past'
+
+    def test_last_hour_in_sentence(self):
+        """'last hour' embedded in a sentence should be extracted."""
+        result = parse_time_references('alerts from the last hour')
+        assert len(result) == 1
+        assert result[0].cardinality == 1
+        assert result[0].frame == 'hour'
+        assert result[0].tense == 'past'
+
+    def test_past_month_in_sentence(self):
+        """'past month' embedded in a sentence should be extracted."""
+        result = parse_time_references('sales trends over the past month')
+        assert len(result) == 1
+        assert result[0].cardinality == 1
+        assert result[0].frame == 'month'
+        assert result[0].tense == 'past'
+
+
+class TestMoreCapitalizationVariants:
+    """Additional capitalization variant tests."""
+
+    def test_last_year_uppercase(self):
+        """'LAST YEAR' should work (case-insensitive)."""
+        result = parse_time_references('LAST YEAR')
+        assert len(result) == 1
+        assert result[0].cardinality == 1
+        assert result[0].frame == 'year'
+        assert result[0].tense == 'past'
+
+    def test_last_day_mixed_case(self):
+        """'Last Day' should work (case-insensitive)."""
+        result = parse_time_references('Last Day')
+        assert len(result) == 1
+        assert result[0].cardinality == 1
+        assert result[0].frame == 'day'
+        assert result[0].tense == 'past'
+
+    def test_past_year_title_case(self):
+        """'Past Year' should work (case-insensitive)."""
+        result = parse_time_references('Past Year')
+        assert len(result) == 1
+        assert result[0].cardinality == 1
+        assert result[0].frame == 'year'
+        assert result[0].tense == 'past'
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])

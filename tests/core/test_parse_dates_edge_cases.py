@@ -212,5 +212,80 @@ class TestWrittenMonthThroughParseDate:
         assert any(ed.date_type == 'FULL_EXPLICIT_DATE' for ed in result.explicit_dates)
 
 
+class TestWhitespaceAndNoDateStrings:
+    """Tests for whitespace-only and numbers-only strings."""
+
+    def test_whitespace_only_string(self):
+        """Whitespace-only string should return a ParseResult with no dates."""
+        result = parse_dates('   ')
+        assert isinstance(result, ParseResult)
+        assert result.has_dates is False
+
+    def test_whitespace_only_has_temporal_info_false(self):
+        """Whitespace-only string should return False from has_temporal_info."""
+        assert has_temporal_info('   ') is False
+
+    def test_numbers_only_no_dates(self):
+        """String with only numbers (no date format) should have no dates."""
+        result = parse_dates('42 100 999')
+        assert result.has_dates is False
+
+    def test_numbers_only_has_temporal_info_false(self):
+        """String with only unstructured numbers should return False."""
+        assert has_temporal_info('42 100 999') is False
+
+
+class TestMultipleRelativeTimes:
+    """Tests for multiple relative time expressions in one sentence."""
+
+    def test_two_relative_times_in_sentence(self):
+        """Two relative time references in one sentence should both be extracted."""
+        result = parse_dates('data from 7 days ago and 3 days ago')
+        assert result.has_dates is True
+        assert len(result.relative_times) == 2
+
+    def test_two_relative_times_cardinalities(self):
+        """Both relative time cardinalities should be correct."""
+        result = parse_dates('data from 7 days ago and 3 days ago')
+        cardinalities = {rt.cardinality for rt in result.relative_times}
+        assert 7 in cardinalities
+        assert 3 in cardinalities
+
+
+class TestRelativeAndExplicitMixed:
+    """Tests for a relative time and explicit date in the same sentence."""
+
+    def test_relative_and_explicit_has_dates(self):
+        """Sentence with both a relative time and an explicit date should have_dates True."""
+        result = parse_dates('set deadline 04/15/2024 based on data from 30 days ago')
+        assert result.has_dates is True
+
+    def test_relative_and_explicit_both_extracted(self):
+        """Both the explicit date and relative time should be extracted."""
+        result = parse_dates('set deadline 04/15/2024 based on data from 30 days ago')
+        assert len(result.explicit_dates) >= 1
+        assert len(result.relative_times) >= 1
+
+
+class TestMoreHasTemporalInfoVariants:
+    """Additional has_temporal_info variant tests."""
+
+    def test_tomorrow_is_true(self):
+        """'tomorrow' should return True."""
+        assert has_temporal_info('tomorrow') is True
+
+    def test_next_week_is_true(self):
+        """'next week' should return True."""
+        assert has_temporal_info('next week') is True
+
+    def test_numeric_date_is_true(self):
+        """A numeric date string should return True."""
+        assert has_temporal_info('04/08/2024') is True
+
+    def test_random_words_is_false(self):
+        """Sentence with no temporal references should return False."""
+        assert has_temporal_info('the quick brown fox') is False
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])

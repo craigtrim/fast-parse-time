@@ -119,5 +119,120 @@ class TestSentenceContext:
         assert len(result) == 1
 
 
+class TestAllFullMonthNames:
+    """Tests for all twelve full month names."""
+
+    def test_april(self):
+        """'April 10, 2024' should be parsed as an explicit date."""
+        result = extract_explicit_dates('April 10, 2024')
+        assert len(result) == 1
+        assert 'FULL_EXPLICIT_DATE' in result.values()
+
+    def test_may(self):
+        """'May 20, 2024' should be parsed as an explicit date."""
+        result = extract_explicit_dates('May 20, 2024')
+        assert len(result) == 1
+        assert 'FULL_EXPLICIT_DATE' in result.values()
+
+    def test_june(self):
+        """'June 5, 2024' should be parsed as an explicit date."""
+        result = extract_explicit_dates('June 5, 2024')
+        assert len(result) == 1
+        assert 'FULL_EXPLICIT_DATE' in result.values()
+
+    def test_july(self):
+        """'July 4, 2024' should be parsed as an explicit date."""
+        result = extract_explicit_dates('July 4, 2024')
+        assert len(result) == 1
+        assert 'FULL_EXPLICIT_DATE' in result.values()
+
+    def test_august(self):
+        """'August 15, 2024' should be parsed as an explicit date."""
+        result = extract_explicit_dates('August 15, 2024')
+        assert len(result) == 1
+        assert 'FULL_EXPLICIT_DATE' in result.values()
+
+    def test_september(self):
+        """'September 1, 2024' should be parsed as an explicit date."""
+        result = extract_explicit_dates('September 1, 2024')
+        assert len(result) == 1
+        assert 'FULL_EXPLICIT_DATE' in result.values()
+
+    def test_october(self):
+        """'October 31, 2024' should be parsed as an explicit date."""
+        result = extract_explicit_dates('October 31, 2024')
+        assert len(result) == 1
+        assert 'FULL_EXPLICIT_DATE' in result.values()
+
+    def test_november(self):
+        """'November 11, 2024' should be parsed as an explicit date."""
+        result = extract_explicit_dates('November 11, 2024')
+        assert len(result) == 1
+        assert 'FULL_EXPLICIT_DATE' in result.values()
+
+    def test_december(self):
+        """'December 25, 2024' should be parsed as an explicit date."""
+        result = extract_explicit_dates('December 25, 2024')
+        assert len(result) == 1
+        assert 'FULL_EXPLICIT_DATE' in result.values()
+
+
+class TestDateAtStartOfSentence:
+    """Tests for dates appearing at the very start of a sentence."""
+
+    def test_date_at_start(self):
+        """Date at the start of a sentence should be extracted."""
+        result = extract_explicit_dates('March 15, 2024 is the deadline')
+        assert len(result) == 1
+
+    def test_abbreviated_month_at_start(self):
+        """Abbreviated month at the start of a sentence should be extracted."""
+        result = extract_explicit_dates('Apr 10, 2024 kicks off the project')
+        assert len(result) == 1
+
+
+class TestDateWithoutComma:
+    """Tests for dates with no comma between month+day and year."""
+
+    def test_no_comma_month_day_year(self):
+        """Date without comma between day and year should still parse."""
+        result = extract_explicit_dates('March 15 2024')
+        assert len(result) == 1
+
+    def test_no_comma_abbreviated(self):
+        """Abbreviated month date without comma should still parse."""
+        result = extract_explicit_dates('Jan 1 2024')
+        assert len(result) == 1
+
+
+class TestAdditionalOrdinals:
+    """Tests for additional ordinal day suffixes."""
+
+    def test_ordinal_5th(self):
+        """'March 5th, 2024' should be parsed."""
+        result = extract_explicit_dates('March 5th, 2024')
+        assert len(result) == 1
+
+    def test_ordinal_11th(self):
+        """'July 11th, 2024' should be parsed."""
+        result = extract_explicit_dates('July 11th, 2024')
+        assert len(result) == 1
+
+    def test_ordinal_12th(self):
+        """'August 12th, 2024' should be parsed."""
+        result = extract_explicit_dates('August 12th, 2024')
+        assert len(result) == 1
+
+    def test_ordinal_21st(self):
+        """'October 21st, 2024' should be parsed."""
+        result = extract_explicit_dates('October 21st, 2024')
+        assert len(result) == 1
+
+    def test_ordinal_22nd(self):
+        """'November 22nd, 2024' should be parsed."""
+        result = extract_explicit_dates('November 22nd, 2024')
+        assert len(result) == 1
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])

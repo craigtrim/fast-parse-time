@@ -207,5 +207,90 @@ class TestDataclassFields:
         assert rt.tense == 'past'
 
 
+class TestPresentTenseTimedelta:
+    """Tests for to_timedelta() with present tense (zero offset)."""
+
+    def test_present_tense_returns_zero_timedelta(self):
+        """Present tense should return a zero timedelta."""
+        rt = RelativeTime(cardinality=0, frame='day', tense='present')
+        delta = rt.to_timedelta()
+        assert delta == timedelta(0)
+
+    def test_present_tense_total_seconds_is_zero(self):
+        """Present tense timedelta total_seconds should be 0."""
+        rt = RelativeTime(cardinality=0, frame='day', tense='present')
+        delta = rt.to_timedelta()
+        assert delta.total_seconds() == 0
+
+
+class TestZeroCardinality:
+    """Tests for zero cardinality behavior."""
+
+    def test_zero_cardinality_present(self):
+        """Cardinality of 0 with present tense should produce zero timedelta."""
+        rt = RelativeTime(cardinality=0, frame='day', tense='present')
+        delta = rt.to_timedelta()
+        assert delta.total_seconds() == 0
+
+
+class TestExactCalculationsAdditional:
+    """Additional exact calculation tests for various frames."""
+
+    def test_exact_month_calculation(self):
+        """3 months past from a known reference should be 90 days earlier."""
+        ref = datetime(2025, 9, 1, 0, 0, 0)
+        rt = RelativeTime(cardinality=3, frame='month', tense='past')
+        result = rt.to_datetime(reference=ref)
+        assert result == datetime(2025, 6, 3, 0, 0, 0)
+
+    def test_exact_year_calculation(self):
+        """1 year past from a known reference should be 365 days earlier."""
+        ref = datetime(2025, 6, 15, 0, 0, 0)
+        rt = RelativeTime(cardinality=1, frame='year', tense='past')
+        result = rt.to_datetime(reference=ref)
+        assert result == datetime(2024, 6, 15, 0, 0, 0)
+
+    def test_exact_minute_calculation(self):
+        """30 minutes past from a known reference should give exact result."""
+        ref = datetime(2025, 6, 15, 10, 30, 0)
+        rt = RelativeTime(cardinality=30, frame='minute', tense='past')
+        result = rt.to_datetime(reference=ref)
+        assert result == datetime(2025, 6, 15, 10, 0, 0)
+
+
+class TestTotalSecondsForFrames:
+    """Tests for total_seconds() values across different frames."""
+
+    def test_total_seconds_for_1_day_past(self):
+        """1 day past should be -86400 total seconds."""
+        rt = RelativeTime(cardinality=1, frame='day', tense='past')
+        delta = rt.to_timedelta()
+        assert delta.total_seconds() == -86400
+
+    def test_total_seconds_for_1_hour_past(self):
+        """1 hour past should be -3600 total seconds."""
+        rt = RelativeTime(cardinality=1, frame='hour', tense='past')
+        delta = rt.to_timedelta()
+        assert delta.total_seconds() == -3600
+
+    def test_total_seconds_for_1_minute_past(self):
+        """1 minute past should be -60 total seconds."""
+        rt = RelativeTime(cardinality=1, frame='minute', tense='past')
+        delta = rt.to_timedelta()
+        assert delta.total_seconds() == -60
+
+    def test_total_seconds_for_1_second_past(self):
+        """1 second past should be -1 total seconds."""
+        rt = RelativeTime(cardinality=1, frame='second', tense='past')
+        delta = rt.to_timedelta()
+        assert delta.total_seconds() == -1
+
+    def test_total_seconds_for_1_week_future(self):
+        """1 week future should be +604800 total seconds."""
+        rt = RelativeTime(cardinality=1, frame='week', tense='future')
+        delta = rt.to_timedelta()
+        assert delta.total_seconds() == 604800
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])

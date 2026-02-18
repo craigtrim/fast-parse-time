@@ -246,6 +246,30 @@ class KeyBehaviorsTest(unittest.TestCase):
         result = extract_numeric_dates('Date of birth: 06/23/2004')
         self.assertEqual(result, {'06/23/2004': 'FULL_EXPLICIT_DATE'})
 
+    # -------------------------------------------------------------------------
+    # Additional Key Behaviors
+    # -------------------------------------------------------------------------
+
+    def test_date_in_all_caps_text(self):
+        """Date embedded in all-caps text should still be extracted"""
+        result = extract_numeric_dates('MEETING ON 04/08/2024 CONFIRMED')
+        self.assertEqual(result, {'04/08/2024': 'FULL_EXPLICIT_DATE'})
+
+    def test_date_with_multiple_spaces_between_words(self):
+        """Date preceded by multiple spaces should still be extracted"""
+        result = extract_numeric_dates('Date:   04/08/2024   confirmed')
+        self.assertEqual(result, {'04/08/2024': 'FULL_EXPLICIT_DATE'})
+
+    def test_date_at_very_start_of_string(self):
+        """Date at the very start of the string should be extracted"""
+        result = extract_numeric_dates('04/08/2024 is the deadline')
+        self.assertEqual(result, {'04/08/2024': 'FULL_EXPLICIT_DATE'})
+
+    def test_date_at_very_end_of_string(self):
+        """Date at the very end of the string should be extracted"""
+        result = extract_numeric_dates('The deadline is 04/08/2024')
+        self.assertEqual(result, {'04/08/2024': 'FULL_EXPLICIT_DATE'})
+
 
 if __name__ == '__main__':
     unittest.main()

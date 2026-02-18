@@ -98,5 +98,90 @@ class TestGetDateRangeSentenceContext:
         assert end < now
 
 
+class TestGetDateRangeHoursBased:
+    """Tests for hour-based date ranges."""
+
+    def test_hours_based_range_returns_tuple(self):
+        """Two hour-based references should return a (start, end) tuple."""
+        result = get_date_range('logs from 2 hours ago and 1 hour ago')
+        assert result is not None
+        assert isinstance(result, tuple)
+
+    def test_hours_based_range_ordering(self):
+        """Earlier hour reference should be the start of the range."""
+        result = get_date_range('logs from 2 hours ago and 1 hour ago')
+        assert result is not None
+        start, end = result
+        assert start < end
+
+
+class TestGetDateRangeMinutesBased:
+    """Tests for minute-based date ranges."""
+
+    def test_minutes_based_range_returns_tuple(self):
+        """Two minute-based references should return a (start, end) tuple."""
+        result = get_date_range('events from 30 minutes ago to 10 minutes ago')
+        assert result is not None
+        assert isinstance(result, tuple)
+
+    def test_minutes_based_ordering(self):
+        """Earlier minute reference should be the start of the range."""
+        result = get_date_range('events from 30 minutes ago to 10 minutes ago')
+        assert result is not None
+        start, end = result
+        assert start < end
+
+
+class TestGetDateRangeMonthBased:
+    """Tests for month-based date ranges."""
+
+    def test_month_based_range_returns_tuple(self):
+        """Two month-based references should return a (start, end) tuple."""
+        result = get_date_range('data from 6 months ago to 1 month ago')
+        assert result is not None
+        assert isinstance(result, tuple)
+
+    def test_month_based_ordering(self):
+        """Earlier month reference should be the start of the range."""
+        result = get_date_range('data from 6 months ago to 1 month ago')
+        assert result is not None
+        start, end = result
+        assert start < end
+
+
+class TestGetDateRangeYearBased:
+    """Tests for year-based date ranges."""
+
+    def test_year_based_range_returns_tuple(self):
+        """Two year-based references should return a (start, end) tuple."""
+        result = get_date_range('history from 2 years ago to last year')
+        assert result is not None
+        assert isinstance(result, tuple)
+
+    def test_year_based_ordering(self):
+        """Earlier year reference should be the start of the range."""
+        result = get_date_range('history from 2 years ago to last year')
+        assert result is not None
+        start, end = result
+        assert start < end
+
+
+class TestSameTenseRange:
+    """Tests that two references in the same tense still form a valid range."""
+
+    def test_both_past_forms_valid_range(self):
+        """Two past-tense references should still yield a valid ordered range."""
+        result = get_date_range('from 10 days ago to 5 days ago')
+        assert result is not None
+        start, end = result
+        assert start < end
+
+    def test_both_past_returns_tuple(self):
+        """Two past-tense references should return a tuple."""
+        result = get_date_range('between 14 days ago and 7 days ago')
+        assert result is not None
+        assert isinstance(result, tuple)
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
