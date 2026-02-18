@@ -21,7 +21,25 @@ class DigitTextReplacer(object):
     INFORMAL_QUANTITIES = {'several': '3', 'few': '3'}
 
     # Multi-token phrase replacements (order matters - longer phrases first)
+    # Related GitHub Issues:
+    #     #18 - Gap: near-past/near-future idioms not supported
+    #           https://github.com/craigtrim/fast-parse-time/issues/18
     PHRASE_REPLACEMENTS = [
+        # Near-past idioms — 2 days ago
+        # Longer 'the day before yesterday' must precede 'day before yesterday'
+        ('the day before yesterday', '2 days ago'),
+        ('day before yesterday', '2 days ago'),
+        # Near-future idioms — 2 days from now
+        # Fix: 'the day after tomorrow' previously matched embedded 'tomorrow' (→1 day)
+        # Longer form must precede shorter to avoid partial match
+        ('the day after tomorrow', '2 days from now'),
+        ('day after tomorrow', '2 days from now'),
+        # Archaic single-token synonym for 2 days from now
+        ('overmorrow', '2 days from now'),
+        # Present-anchored idioms — normalize to 'today' (already in KB)
+        ('till date', 'today'),
+        ('to date', 'today'),
+        # Existing phrase replacements
         ('half an hour', '30 minutes'),
         ('half a day', '12 hours'),
     ]
