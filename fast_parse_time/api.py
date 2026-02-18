@@ -179,6 +179,11 @@ def extract_explicit_dates(text: str) -> Dict[str, str]:
     if hyphen_result:
         result.update(hyphen_result)
 
+    # Also try prose year patterns (in 2004, since 2019, 2014-2015, from 2004 to 2008)
+    prose_result = extractor.extract_prose_year(input_text=text)
+    if prose_result:
+        result.update(prose_result)
+
     return result
 
 

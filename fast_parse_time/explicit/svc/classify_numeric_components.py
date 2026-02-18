@@ -36,7 +36,10 @@ class ClassifyNumericComponents(object):
         elif len(_date_delims) == 1:
             if not self.__delimited_classifer:
                 self.__delimited_classifer = DelimitedDateClassifier()
-            return self.__delimited_classifer.process(input_text=input_text, delimiter=_date_delims[0])
+            delimited_result = self.__delimited_classifer.process(
+                input_text=input_text, delimiter=_date_delims[0])
+            if delimited_result is not None:
+                return delimited_result
 
         if '-' in input_text:
 
@@ -49,13 +52,11 @@ class ClassifyNumericComponents(object):
                 return False
 
             input_tokens: list[str] = input_text.split('-')
-            input_tokens = [
-                is_valid_year(input_token)
-                for input_token in input_tokens
-            ]
 
-            if len(input_tokens) == 2 and int(input_tokens[0]) < int(input_tokens[1]):
-                return DateType.YEAR_RANGE
+            if len(input_tokens) == 2 and all(is_valid_year(t) for t in input_tokens):
+                year_a, year_b = int(input_tokens[0]), int(input_tokens[1])
+                if year_a < year_b:
+                    return DateType.YEAR_RANGE
 
     def process(self,
                 input_tokens: list[str]) -> dict[str, DateType] | None:
