@@ -5,7 +5,7 @@
 import re
 
 from fast_parse_time.core import configure_logger, Stopwatch
-from fast_parse_time.explicit.dto import DateType, MONTH_NAMES
+from fast_parse_time.explicit.dto import DateType, MONTH_NAMES, MIN_YEAR, MAX_YEAR
 from fast_parse_time.explicit.dmo.stdlib_date_validator import try_parse_date
 from fast_parse_time.explicit.svc import (
     PreClassifyNumericComponents,
@@ -108,6 +108,59 @@ class ExplicitTimeExtractor(object):
                 matches.append(match.group())
 
         return matches
+
+    def extract_hyphen_month_year(self, input_text: str) -> dict[str, DateType]:
+        """
+        Extract hyphen-delimited month-year patterns from text.
+
+        Handles forward and reversed forms for abbreviated and full month names,
+        with both 2-digit and 4-digit years:
+
+        - Forward  (→ MONTH_YEAR): Oct-23, Oct-2023, October-23, October-2023
+        - Reversed (→ YEAR_MONTH): 23-Oct, 2023-Oct, 23-October, 2023-October
+
+        Matching is case-insensitive. 2-digit years are accepted as-is.
+        4-digit years must fall within MIN_YEAR–MAX_YEAR.
+
+        Args:
+            input_text (str): The input text to search.
+
+        Returns:
+            dict: Mapping of matched date strings to DateType names, or None.
+
+        Related GitHub Issue:
+            #21 - Gap: abbreviated month-year format not supported (Oct-23, May-23)
+            https://github.com/craigtrim/fast-parse-time/issues/21
+        """
+        if not input_text or not isinstance(input_text, str):
+            return None
+
+        month_pattern = '|'.join(sorted(MONTH_NAMES, key=len, reverse=True))
+
+        # Forward: MonthName-Year  →  MONTH_YEAR
+        pattern_forward = rf'(?i)\b({month_pattern})-(\d{{4}}|\d{{2}})\b'
+        # Reversed: Year-MonthName  →  YEAR_MONTH
+        pattern_reversed = rf'(?i)\b(\d{{4}}|\d{{2}})-({month_pattern})\b'
+
+        def _valid_year(raw: str) -> bool:
+            n = int(raw)
+            if len(raw) == 2:
+                return True  # all 2-digit years accepted (interpreted as 2000+YY)
+            return MIN_YEAR <= n <= MAX_YEAR
+
+        result = {}
+
+        for match in re.finditer(pattern_forward, input_text):
+            year_tok = match.group(2)
+            if _valid_year(year_tok):
+                result[match.group()] = DateType.MONTH_YEAR.name
+
+        for match in re.finditer(pattern_reversed, input_text):
+            year_tok = match.group(1)
+            if _valid_year(year_tok):
+                result[match.group()] = DateType.YEAR_MONTH.name
+
+        return result if result else None
 
     def extract_written_dates(self, input_text: str) -> dict[str, DateType]:
         """
