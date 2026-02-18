@@ -172,9 +172,11 @@ class ExplicitTimeExtractor(object):
             'through 2019', 'as of 2004', 'back to 1998', 'prior to 2010'.
 
         Part B — YEAR_RANGE: Recognises prose year-range patterns such as:
-            'from 2004 to 2008', 'between 2010 and 2020'.
+            'from 2004 to 2008', 'from 2004 through 2008',
+            'between 2010 and 2020', '2014 to 2015', '2025-26'.
 
         Year validity: 4-digit years are accepted only within MIN_YEAR–MAX_YEAR.
+        Abbreviated second year (YYYY-YY) uses century-rollover logic.
 
         Args:
             input_text (str): The input text to search.
@@ -182,9 +184,11 @@ class ExplicitTimeExtractor(object):
         Returns:
             dict: Mapping of matched tokens to DateType names, or None.
 
-        Related GitHub Issue:
+        Related GitHub Issues:
             #24 - Gap: year-only references not extracted from prose (in 2004, in 2008)
             https://github.com/craigtrim/fast-parse-time/issues/24
+            #40 - feat: Parse year-range expressions (e.g., 2014-2015)
+            https://github.com/craigtrim/fast-parse-time/issues/40
         """
         if not input_text or not isinstance(input_text, str):
             return None
@@ -207,8 +211,8 @@ class ExplicitTimeExtractor(object):
             if _valid_year(y1) and _valid_year(y2) and int(y1) < int(y2):
                 result[match.group()] = DateType.YEAR_RANGE.name
 
-        # "from YYYY to YYYY"
-        pattern_from_to = r'(?i)\bfrom\s+(\d{4})\s+to\s+(\d{4})\b'
+        # "from YYYY to YYYY" / "from YYYY through YYYY"
+        pattern_from_to = r'(?i)\bfrom\s+(\d{4})\s+(?:to|through)\s+(\d{4})\b'
         for match in re.finditer(pattern_from_to, input_text):
             y1, y2 = match.group(1), match.group(2)
             if _valid_year(y1) and _valid_year(y2) and int(y1) < int(y2):
@@ -220,6 +224,28 @@ class ExplicitTimeExtractor(object):
             y1, y2 = match.group(1), match.group(2)
             if _valid_year(y1) and _valid_year(y2) and int(y1) < int(y2):
                 result[f'{y1}-{y2}'] = DateType.YEAR_RANGE.name
+
+        # "YYYY to YYYY" (bare, without "from") — e.g., "2014 to 2015"
+        pattern_bare_to = r'(?i)\b(\d{4})\s+to\s+(\d{4})\b'
+        for match in re.finditer(pattern_bare_to, input_text):
+            y1, y2 = match.group(1), match.group(2)
+            if _valid_year(y1) and _valid_year(y2) and int(y1) < int(y2):
+                result[f'{y1}-{y2}'] = DateType.YEAR_RANGE.name
+
+        # "YYYY-YY" abbreviated second year — e.g., "2025-26", "1999-00"
+        # Uses century-rollover: 1999-00 → 1900+0=1900 ≤ 1999 → add 100 → 2000
+        pattern_abbrev = r'\b(\d{4})-(\d{2})\b'
+        for match in re.finditer(pattern_abbrev, input_text):
+            y1_full = int(match.group(1))
+            y2_abbrev = int(match.group(2))
+            century = (y1_full // 100) * 100
+            y2_full = century + y2_abbrev
+            if y2_full <= y1_full:
+                y2_full += 100  # century rollover (e.g., 1999-00 → 2000)
+            if (MIN_YEAR <= y1_full <= MAX_YEAR
+                    and MIN_YEAR <= y2_full <= MAX_YEAR
+                    and y1_full < y2_full):
+                result[match.group()] = DateType.YEAR_RANGE.name
 
         # ── Part A: preposition-preceded single year → YEAR_ONLY ──
 
