@@ -13,6 +13,31 @@ from fast_parse_time.implicit.dmo import KeywordSequenceExtractor
 from fast_parse_time.implicit.dmo import SequenceSolutionFinder
 
 
+# All recognized time unit words (singular, plural, abbreviated forms)
+# Related GitHub Issue:
+#     #20 - Gap: compound multi-unit expressions not supported
+#     https://github.com/craigtrim/fast-parse-time/issues/20
+_COMPOUND_UNIT_WORDS = {
+    'second', 'seconds', 'sec', 'secs',
+    'minute', 'minutes', 'min', 'mins',
+    'hour', 'hours', 'hr', 'hrs',
+    'day', 'days',
+    'week', 'weeks', 'wk', 'wks',
+    'month', 'months', 'mo', 'mos',
+    'year', 'years', 'yr', 'yrs',
+    'decade', 'decades',
+}
+
+# Tokens that act as connectors between unit pairs — stripped during compound parsing
+_COMPOUND_CONNECTORS = {'and'}
+
+# Past tense terminal markers
+_PAST_MARKERS = {'ago', 'back'}
+
+# Future tense terminal suffix tokens (requires preceding 'from')
+_FUTURE_TERMINALS = {'now', 'today'}
+
+
 class AnalyzeTimeReferences(object):
     """ Analyze Time References in Text """
 
@@ -22,6 +47,11 @@ class AnalyzeTimeReferences(object):
         Created:
             10-Aug-2022
             craigtrim@gmail.com
+        Updated:
+            18-Feb-2026
+            craigtrim@gmail.com
+            *   Add compound multi-unit expression support
+                https://github.com/craigtrim/fast-parse-time/issues/20
         """
         self.logger = configure_logger(__name__)
         self._generate_event = ServiceEventGenerator().process
@@ -31,15 +61,130 @@ class AnalyzeTimeReferences(object):
         self._extract_sequences = KeywordSequenceExtractor().process
         self._find_solutions = SequenceSolutionFinder().process
 
+    @staticmethod
+    def _is_numeric(token: str) -> bool:
+        """Return True if token is an integer or decimal digit string."""
+        return token.isdigit() or (
+            '.' in token and token.replace('.', '', 1).isdigit()
+        )
+
+    def _extract_compound_sub_tokens(self, tokens: list) -> Optional[list]:
+        """Detect and expand a compound multi-unit token list.
+
+        Recognises patterns like:
+            ['1', 'year', '2', 'months', 'ago']
+            ['in', '1', 'year', '2', 'months']
+            ['1', 'year', 'and', '2', 'months', 'from', 'now']
+
+        Returns a list of single-unit token lists (one per unit pair) if the
+        input is a compound expression containing 2 or more N-unit pairs.
+        Returns None if the tokens do not represent a compound expression.
+
+        Args:
+            tokens (list): normalized token list (after DigitTextReplacer)
+
+        Returns:
+            Optional[list]: list of sub-token lists, or None
+
+        Related GitHub Issue:
+            #20 - Gap: compound multi-unit expressions not supported
+            https://github.com/craigtrim/fast-parse-time/issues/20
+        """
+        if len(tokens) < 4:
+            # Minimum compound: N unit N unit (4 tokens, no tense marker)
+            return None
+
+        # --- Determine tense and strip tense markers from body ---
+        if tokens[-1] in _PAST_MARKERS:
+            tense_suffix = [tokens[-1]]
+            body = tokens[:-1]
+        elif (len(tokens) >= 2
+              and tokens[-2] == 'from'
+              and tokens[-1] in _FUTURE_TERMINALS):
+            tense_suffix = ['from', 'now']
+            body = tokens[:-2]
+        elif tokens[0] == 'in':
+            tense_suffix = ['from', 'now']
+            body = tokens[1:]
+        else:
+            # No explicit tense marker; treat as implicit past
+            tense_suffix = ['ago']
+            body = tokens
+
+        # --- Strip connectors from body (commas already stripped upstream) ---
+        body = [t for t in body if t not in _COMPOUND_CONNECTORS]
+
+        # --- Parse contiguous N-unit pairs ---
+        pairs = []
+        i = 0
+        while i < len(body):
+            token = body[i]
+            if (self._is_numeric(token)
+                    and i + 1 < len(body)
+                    and body[i + 1] in _COMPOUND_UNIT_WORDS):
+                pairs.append((token, body[i + 1]))
+                i += 2
+            else:
+                i += 1
+
+        if len(pairs) < 2:
+            # Single-unit or no unit — not a compound expression
+            return None
+
+        # Expand each pair into a standalone single-unit sub-expression
+        return [[n, unit] + tense_suffix for n, unit in pairs]
+
+    def _solve_sub_tokens(self, sub_tokens: list) -> list:
+        """Run the KB pipeline on a single-unit token list.
+
+        Args:
+            sub_tokens (list): e.g. ['2', 'months', 'ago']
+
+        Returns:
+            list: solutions found (0 or 1 entries)
+        """
+        seqs = self._extract_sequences(sub_tokens)
+        seqs = self._filter_sequences(seqs)
+        return self._find_solutions(seqs)
+
     def _process(self,
                  input_text: str) -> dict:
 
         tokens = input_text.lower().strip().split()
 
         tokens = self._digit_replacer(tokens)
-        sequences = self._extract_sequences(tokens)
-        sequences = self._filter_sequences(sequences)
+
+        # Extract sequences before KB filtering (needed for compound detection below)
+        all_sequences = self._extract_sequences(tokens)
+
+        sequences = self._filter_sequences(all_sequences)
         solutions = self._find_solutions(sequences)
+
+        # --- Compound expansion ---
+        # For each sequence that didn't resolve via the normal pipeline, attempt
+        # compound detection and expansion. Running per-sequence (not on the full
+        # token list) correctly handles 'in' prefixes embedded in longer sentences.
+        #
+        # Example: 'the contract expires in 2 years 6 months'
+        #   Sequence extractor yields: [['in', '2', 'years', '6', 'months']]
+        #   Compound detects 'in' at position 0 of that sequence → future tense.
+        #
+        # Also fixes the partial-match bug where '1 year ... 1 minute ago'
+        # previously returned only the last unit.
+        #
+        # Related GitHub Issue:
+        #     #20 - Gap: compound multi-unit expressions not supported
+        #     https://github.com/craigtrim/fast-parse-time/issues/20
+        compound_solutions = []
+        for seq in all_sequences:
+            expanded = self._extract_compound_sub_tokens(seq)
+            if expanded:
+                for sub_tokens in expanded:
+                    compound_solutions.extend(self._solve_sub_tokens(sub_tokens))
+
+        # Use compound results when they yield more solutions (handles partial-match bug)
+        if len(compound_solutions) > len(solutions):
+            solutions = compound_solutions
 
         return {
             'input_text': input_text,
