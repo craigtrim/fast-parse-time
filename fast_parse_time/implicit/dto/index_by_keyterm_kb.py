@@ -19764,4 +19764,10 @@ d_index_by_keyterm_kb = {
  'morning': ['this morning'],
  'afternoon': ['this afternoon'],
  'evening': ['this evening'],
+ # Related GitHub Issue:
+ #     #17 - Gap: end-of-period abbreviations not supported (eod, eom, eoy)
+ #     https://github.com/craigtrim/fast-parse-time/issues/17
+ 'eod': ['eod'],
+ 'eom': ['eom'],
+ 'eoy': ['eoy'],
  'night': ['last night']}
