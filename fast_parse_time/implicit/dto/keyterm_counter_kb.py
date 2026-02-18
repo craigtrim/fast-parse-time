@@ -428,4 +428,8 @@ d_keyterm_counter_kb = {
  #     https://github.com/craigtrim/fast-parse-time/issues/17
  'eod': 1,
  'eom': 1,
- 'eoy': 1}
+ 'eoy': 1,
+ # Related GitHub Issue:
+ #     #16 - Gap: 'now' and 'right now' not recognized as present-tense references
+ #     https://github.com/craigtrim/fast-parse-time/issues/16
+ 'right': 1}
