@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 
+
 d_keyterm_counter_kb = {
     '1': 80,
     '10': 104,
@@ -1064,5 +1065,7 @@ d_keyterm_counter_kb = {
     '997': 117,
     '998': 117,
     '999': 117,
-    '1000': 117
+    '1000': 117,
+    'decade': 16,
+    'decades': 891,
 }
