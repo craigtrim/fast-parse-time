@@ -85,6 +85,31 @@ class DigitTextReplacer(object):
             text = text.replace(phrase, replacement)
         return text.split()
 
+    def _round_float_tokens(self, tokens: list) -> list:
+        """Round float tokens to the nearest integer string.
+
+        Converts decimal numeric strings (e.g. '7.2', '22.355') to their
+        rounded integer equivalent ('7', '22') so the KB can match them.
+        Integer tokens and non-numeric tokens are passed through unchanged.
+
+        Rounding uses Python's built-in round() (banker's rounding):
+            7.2 → '7',  7.8 → '8',  4.8 → '5',  22.355 → '22'
+
+        Related GitHub Issue:
+            #15 - Gap: float/decimal cardinalities not supported
+            https://github.com/craigtrim/fast-parse-time/issues/15
+        """
+        result = []
+        for token in tokens:
+            if '.' in token:
+                try:
+                    result.append(str(round(float(token))))
+                except ValueError:
+                    result.append(token)
+            else:
+                result.append(token)
+        return result
+
     def _normalize_unit_plurals(self, tokens: list) -> list:
         """Pluralize singular abbreviated units when preceded by N > 1.
 
@@ -145,6 +170,9 @@ class DigitTextReplacer(object):
                 tokens: list) -> list:
         # First, handle multi-token phrase replacements
         tokens = self._replace_phrases(tokens)
+
+        # Round float tokens to nearest integer before KB lookup
+        tokens = self._round_float_tokens(tokens)
 
         # Replace named weekday references with computed day offsets
         tokens = self._replace_weekday_refs(tokens)
