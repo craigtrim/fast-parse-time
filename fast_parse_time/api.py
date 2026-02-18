@@ -21,6 +21,7 @@ from fast_parse_time.explicit.dto import DateType
 from fast_parse_time.explicit.bp import ExplicitTimeExtractor
 from fast_parse_time.explicit.svc import normalize_text
 from fast_parse_time.implicit.svc import AnalyzeTimeReferences, ResolveTimeReferences
+from fast_parse_time.implicit.dto.index_by_slot_kb import Slot
 
 
 # ============================================================================
@@ -37,11 +38,7 @@ class RelativeTime:
     def to_timedelta(self) -> timedelta:
         """Convert to Python timedelta object"""
         # Use the internal _get_timedelta method directly for cleaner conversion
-        solution = {
-            'Cardinality': self.cardinality,
-            'Frame': self.frame,
-            'Tense': self.tense
-        }
+        solution = Slot(self.cardinality, self.frame, self.tense)
         return ResolveTimeReferences._get_timedelta(solution)
 
     def to_datetime(self, reference: Optional[datetime] = None) -> datetime:
@@ -234,9 +231,9 @@ def extract_relative_times(text: str) -> List[RelativeTime]:
     relative_times = []
     for item in result.get('result', []):
         relative_times.append(RelativeTime(
-            cardinality=item['Cardinality'],
-            frame=item['Frame'],
-            tense=item['Tense']
+            cardinality=item.cardinality,
+            frame=item.frame,
+            tense=item.tense
         ))
 
     return relative_times

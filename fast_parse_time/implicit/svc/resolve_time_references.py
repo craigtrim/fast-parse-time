@@ -23,36 +23,36 @@ class ResolveTimeReferences(object):
 
     @staticmethod
     def _get_timedelta(solution: list) -> timedelta:
-        x = solution['Cardinality']
-        if solution['Tense'] == 'past':
+        x = solution.cardinality
+        if solution.tense == 'past':
             x *= -1
 
-        if solution['Frame'] == 'year':
+        if solution.frame == 'year':
             x *= 365
             return timedelta(days=x)
 
-        if solution['Frame'] == 'month':
+        if solution.frame == 'month':
             x *= 30  # ave. of 30 days/mo
             # if you want to get clever find the current month, then step forward or backward % 12 and get 28,29,30,31 :/
             return timedelta(days=x)
 
-        if solution['Frame'] == 'week':
+        if solution.frame == 'week':
             x *= 7
             return timedelta(days=x)
 
-        if solution['Frame'] == 'day':
+        if solution.frame == 'day':
             return timedelta(days=x)
 
-        if solution['Frame'] == 'hour':
+        if solution.frame == 'hour':
             return timedelta(hours=x)
 
-        if solution['Frame'] == 'minute':
+        if solution.frame == 'minute':
             return timedelta(minutes=x)
 
-        if solution['Frame'] == 'second':
+        if solution.frame == 'second':
             return timedelta(seconds=x)
 
-        raise NotImplementedError(solution['Frame'])
+        raise NotImplementedError(solution.frame)
 
     def _process(self,
                  solutions: list,
