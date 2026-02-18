@@ -2,8 +2,10 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/fast-parse-time.svg)](https://pypi.org/project/fast-parse-time/)
 [![Python Version](https://img.shields.io/pypi/pyversions/fast-parse-time.svg)](https://pypi.org/project/fast-parse-time/)
+[![Downloads](https://pepy.tech/badge/fast-parse-time)](https://pepy.tech/project/fast-parse-time)
 [![Downloads](https://pepy.tech/badge/fast-parse-time/month)](https://pepy.tech/project/fast-parse-time)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Tests](https://img.shields.io/badge/tests-413-brightgreen.svg)](https://github.com/craigtrim/fast-parse-time/tree/master/tests)
 
 Extract dates and times from text. Fast, deterministic, zero cost.
 
@@ -100,9 +102,10 @@ datetimes = resolve_to_datetime("Show me data from 5 days ago")
 
 ## Documentation
 
-- [Complete API Reference](docs/API.md)
-- [System Boundaries](BOUNDARIES.md) - Design decisions and limitations
-- [Examples](docs/API.md#examples)
+- [API Reference](https://github.com/craigtrim/fast-parse-time/blob/master/docs/API.md)
+- [Functions](https://github.com/craigtrim/fast-parse-time/blob/master/docs/functions.md) - All functions with examples
+- [Types](https://github.com/craigtrim/fast-parse-time/blob/master/docs/types.md) - Data classes and DateType enum
+- [System Boundaries](https://github.com/craigtrim/fast-parse-time/blob/master/BOUNDARIES.md) - Design decisions and limitations
 
 ## Performance
 
@@ -118,4 +121,4 @@ MIT - See [LICENSE](LICENSE) for details.
 
 ---
 
-[Report Issues](https://github.com/craigtrim/fast-parse-time/issues) | [API Docs](docs/API.md) | [PyPI](https://pypi.org/project/fast-parse-time/)
+[Report Issues](https://github.com/craigtrim/fast-parse-time/issues) | [API Docs](https://github.com/craigtrim/fast-parse-time/blob/master/docs/API.md) | [PyPI](https://pypi.org/project/fast-parse-time/)
