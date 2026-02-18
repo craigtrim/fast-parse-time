@@ -432,4 +432,10 @@ d_keyterm_counter_kb = {
  # Related GitHub Issue:
  #     #16 - Gap: 'now' and 'right now' not recognized as present-tense references
  #     https://github.com/craigtrim/fast-parse-time/issues/16
- 'right': 1}
+ 'right': 1,
+ # Related GitHub Issue:
+ #     #8 - Gap: before now / prior / back past-tense aliases
+ #     https://github.com/craigtrim/fast-parse-time/issues/8
+ 'before': 1012,
+ 'prior': 1012,
+ 'back': 1012}
