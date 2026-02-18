@@ -19,6 +19,7 @@ from dataclasses import dataclass
 
 from fast_parse_time.explicit.dto import DateType
 from fast_parse_time.explicit.bp import ExplicitTimeExtractor
+from fast_parse_time.explicit.svc import normalize_text
 from fast_parse_time.implicit.svc import AnalyzeTimeReferences, ResolveTimeReferences
 
 
@@ -162,6 +163,10 @@ def extract_explicit_dates(text: str) -> Dict[str, str]:
         >>> extract_explicit_dates("Event on March 15, 2024")
         {'March 15, 2024': 'FULL_EXPLICIT_DATE'}
     """
+    if not isinstance(text, str):
+        return {}
+
+    text = normalize_text(text)
     extractor = ExplicitTimeExtractor()
 
     # Try numeric dates first
