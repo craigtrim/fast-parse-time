@@ -25,12 +25,14 @@ classifiers = [
   "Natural Language :: English",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
   "Topic :: Software Development :: Libraries :: Python Modules",
   "Topic :: Text Processing :: Linguistic",
   "Typing :: Typed",
 ]
-requires-python = ">=3.11.5"
+requires-python = ">=3.10"
 dependencies = [
   "word2number",
 ]
@@ -43,7 +45,7 @@ Repository = "https://github.com/craigtrim/fast-parse-time"
 packages = [{ include = "fast_parse_time" }]
 
 [tool.poetry.dependencies]
-python = "^3.11.5"
+python = "^3.10"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "*"
