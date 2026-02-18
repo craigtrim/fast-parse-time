@@ -3,10 +3,10 @@
 """ NLP API for Parsing Dates of all Kinds """
 
 import re
-import dateparser
 
 from fast_parse_time.core import configure_logger, Stopwatch
 from fast_parse_time.explicit.dto import DateType, MONTH_NAMES
+from fast_parse_time.explicit.dmo.stdlib_date_validator import try_parse_date
 from fast_parse_time.explicit.svc import (
     PreClassifyNumericComponents,
     TokenizeNumericComponents,
@@ -131,9 +131,8 @@ class ExplicitTimeExtractor(object):
             # Found explicit date patterns
             result = {}
             for date_str in date_matches:
-                # Verify with dateparser
                 normalized = self._strip_ordinal(date_str)
-                if dateparser.parse(normalized):
+                if try_parse_date(normalized):
                     result[date_str] = DateType.FULL_EXPLICIT_DATE.name
 
             if result:
@@ -143,8 +142,7 @@ class ExplicitTimeExtractor(object):
 
         # Fallback: try parsing the whole text (for simple cases like "March 15, 2024")
         normalized_text = self._strip_ordinal(input_text)
-        parsed = dateparser.parse(normalized_text)
-        if not parsed:
+        if not try_parse_date(normalized_text):
             return None
 
         # Determine if this is a full date or partial
