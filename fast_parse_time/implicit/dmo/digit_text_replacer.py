@@ -3,6 +3,7 @@
 """ Replace Spelled-Out forms of Numbers with their Digits """
 
 
+from datetime import date
 from word2number import w2n
 
 
@@ -36,6 +37,26 @@ class DigitTextReplacer(object):
         'hour': 'hours',
     }
 
+    # Weekday name/abbreviation → ISO weekday number (Monday=0 ... Sunday=6)
+    # Related GitHub Issues:
+    #     #11 - Gap: named weekday references not supported (next friday, last monday)
+    #           https://github.com/craigtrim/fast-parse-time/issues/11
+    #     #12 - feat: Support forward day-of-week references (next Friday, next Monday)
+    #           https://github.com/craigtrim/fast-parse-time/issues/12
+    WEEKDAY_NAMES = {
+        'monday': 0, 'mon': 0,
+        'tuesday': 1, 'tue': 1, 'tues': 1,
+        'wednesday': 2, 'wed': 2, 'weds': 2,
+        'thursday': 3, 'thu': 3, 'thurs': 3,
+        'friday': 4, 'fri': 4,
+        'saturday': 5, 'sat': 5,
+        'sunday': 6, 'sun': 6,
+    }
+
+    # Tense prefixes for weekday references
+    FUTURE_WEEKDAY_PREFIXES = {'next', 'this', 'coming'}
+    PAST_WEEKDAY_PREFIXES = {'last', 'past'}
+
     def __init__(self):
         """ Change Log
 
@@ -49,6 +70,11 @@ class DigitTextReplacer(object):
                 https://github.com/craigtrim/fast-parse-time/issues/4
             *   Handle informal expressions 'half an hour', 'several'
                 https://github.com/craigtrim/fast-parse-time/issues/5
+            18-Feb-2026
+            craigtrim@gmail.com
+            *   Handle named weekday references (next friday, last monday)
+                https://github.com/craigtrim/fast-parse-time/issues/11
+                https://github.com/craigtrim/fast-parse-time/issues/12
         """
         pass
 
@@ -74,10 +100,54 @@ class DigitTextReplacer(object):
                     result[i] = self.UNIT_SINGULAR_TO_PLURAL[token]
         return result
 
+    def _replace_weekday_refs(self, tokens: list) -> list:
+        """Replace named weekday references with computed day offsets.
+
+        'next friday'  → ['5', 'days', 'from', 'now']  (if today is Sunday)
+        'last monday'  → ['6', 'days', 'ago']           (if today is Sunday)
+        'this friday'  → ['5', 'days', 'from', 'now']
+        'coming wed'   → ['3', 'days', 'from', 'now']
+        'past tuesday' → ['5', 'days', 'ago']
+
+        Cardinality is always 1-7: the number of days to/from the target weekday.
+        """
+        if len(tokens) < 2:
+            return tokens
+
+        today_wd = date.today().weekday()  # Monday=0, Sunday=6
+        result = []
+        i = 0
+        while i < len(tokens):
+            token = tokens[i]
+            if i + 1 < len(tokens):
+                next_token = tokens[i + 1]
+                if next_token in self.WEEKDAY_NAMES:
+                    target_wd = self.WEEKDAY_NAMES[next_token]
+                    if token in self.FUTURE_WEEKDAY_PREFIXES:
+                        days = (target_wd - today_wd) % 7
+                        if days == 0:
+                            days = 7  # 'next' always means upcoming, not today
+                        result.extend([str(days), 'days', 'from', 'now'])
+                        i += 2
+                        continue
+                    elif token in self.PAST_WEEKDAY_PREFIXES:
+                        days = (today_wd - target_wd) % 7
+                        if days == 0:
+                            days = 7  # 'last' always means most recent past
+                        result.extend([str(days), 'days', 'ago'])
+                        i += 2
+                        continue
+            result.append(token)
+            i += 1
+        return result
+
     def process(self,
                 tokens: list) -> list:
         # First, handle multi-token phrase replacements
         tokens = self._replace_phrases(tokens)
+
+        # Replace named weekday references with computed day offsets
+        tokens = self._replace_weekday_refs(tokens)
 
         normalized = []
 
