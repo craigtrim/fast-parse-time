@@ -44,7 +44,6 @@ generate-setup-file = true
 [tool.poetry.dependencies]
 python = "^3.11.5"
 word2number = "*"
-dateparser = "*"
 
 [tool.poetry.dev-dependencies]
 autopep8 = "*"
