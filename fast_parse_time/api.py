@@ -184,6 +184,14 @@ def extract_explicit_dates(text: str) -> Dict[str, str]:
     if prose_result:
         result.update(prose_result)
 
+    # Also try ISO 8601 datetime strings (2017-02-03T09:04:08Z, +00:00 offset, etc.)
+    # Related GitHub Issue:
+    #     #23 - Gap: ISO 8601 datetime strings not extracted
+    #     https://github.com/craigtrim/fast-parse-time/issues/23
+    iso_result = extractor.extract_iso8601_dates(input_text=text)
+    if iso_result:
+        result.update(iso_result)
+
     return result
 
 
