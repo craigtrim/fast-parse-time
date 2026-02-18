@@ -6513,4 +6513,9 @@ d_index_by_slot_kb = {
  #     https://github.com/craigtrim/fast-parse-time/issues/17
  'eod': {'Cardinality': 0, 'Frame': 'day', 'Tense': 'future'},
  'eom': {'Cardinality': 0, 'Frame': 'month', 'Tense': 'future'},
- 'eoy': {'Cardinality': 0, 'Frame': 'year', 'Tense': 'future'}}
+ 'eoy': {'Cardinality': 0, 'Frame': 'year', 'Tense': 'future'},
+ # Related GitHub Issue:
+ #     #16 - Gap: 'now' and 'right now' not recognized as present-tense references
+ #     https://github.com/craigtrim/fast-parse-time/issues/16
+ 'now': {'Cardinality': 0, 'Frame': 'second', 'Tense': 'present'},
+ 'right now': {'Cardinality': 0, 'Frame': 'second', 'Tense': 'present'}}

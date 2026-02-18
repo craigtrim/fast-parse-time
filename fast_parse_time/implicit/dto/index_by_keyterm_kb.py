@@ -15006,7 +15006,9 @@ d_index_by_keyterm_kb = {
           'next hr',
           'next wk',
           'next yr'],
- 'now': ['1 days from now',
+ 'now': ['now',
+         'right now',
+         '1 days from now',
          '1 hours from now',
          '1 minutes from now',
          '1 months from now',
@@ -19822,4 +19824,8 @@ d_index_by_keyterm_kb = {
  'eod': ['eod'],
  'eom': ['eom'],
  'eoy': ['eoy'],
+ # Related GitHub Issue:
+ #     #16 - Gap: 'now' and 'right now' not recognized as present-tense references
+ #     https://github.com/craigtrim/fast-parse-time/issues/16
+ 'right': ['right now'],
  'night': ['last night']}
