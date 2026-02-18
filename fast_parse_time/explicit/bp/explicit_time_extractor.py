@@ -162,6 +162,94 @@ class ExplicitTimeExtractor(object):
 
         return result if result else None
 
+    def extract_prose_year(self, input_text: str) -> dict[str, DateType]:
+        """
+        Extract year references preceded by temporal prepositions and year ranges.
+
+        Part A — YEAR_ONLY: Recognises preposition + 4-digit-year patterns such as:
+            'in 2004', 'since 2019', 'by 2024', 'until 2030', 'before 2004',
+            'after 2004', 'during 2020', 'circa 2004', 'around 2019', 'from 2019',
+            'through 2019', 'as of 2004', 'back to 1998', 'prior to 2010'.
+
+        Part B — YEAR_RANGE: Recognises prose year-range patterns such as:
+            'from 2004 to 2008', 'between 2010 and 2020'.
+
+        Year validity: 4-digit years are accepted only within MIN_YEAR–MAX_YEAR.
+
+        Args:
+            input_text (str): The input text to search.
+
+        Returns:
+            dict: Mapping of matched tokens to DateType names, or None.
+
+        Related GitHub Issue:
+            #24 - Gap: year-only references not extracted from prose (in 2004, in 2008)
+            https://github.com/craigtrim/fast-parse-time/issues/24
+        """
+        if not input_text or not isinstance(input_text, str):
+            return None
+
+        def _valid_year(raw: str) -> bool:
+            try:
+                n = int(raw)
+                return MIN_YEAR <= n <= MAX_YEAR
+            except ValueError:
+                return False
+
+        result = {}
+
+        # ── Part B: prose year-range patterns (run first to avoid double-counting) ──
+
+        # "YYYY-YYYY" hyphen form (e.g., 2014-2015)
+        # The numeric tokenizer rejects single-hyphen tokens, so we detect here.
+        for match in re.finditer(r'\b(\d{4})-(\d{4})\b', input_text):
+            y1, y2 = match.group(1), match.group(2)
+            if _valid_year(y1) and _valid_year(y2) and int(y1) < int(y2):
+                result[match.group()] = DateType.YEAR_RANGE.name
+
+        # "from YYYY to YYYY"
+        pattern_from_to = r'(?i)\bfrom\s+(\d{4})\s+to\s+(\d{4})\b'
+        for match in re.finditer(pattern_from_to, input_text):
+            y1, y2 = match.group(1), match.group(2)
+            if _valid_year(y1) and _valid_year(y2) and int(y1) < int(y2):
+                result[f'{y1}-{y2}'] = DateType.YEAR_RANGE.name
+
+        # "between YYYY and YYYY"
+        pattern_between = r'(?i)\bbetween\s+(\d{4})\s+and\s+(\d{4})\b'
+        for match in re.finditer(pattern_between, input_text):
+            y1, y2 = match.group(1), match.group(2)
+            if _valid_year(y1) and _valid_year(y2) and int(y1) < int(y2):
+                result[f'{y1}-{y2}'] = DateType.YEAR_RANGE.name
+
+        # ── Part A: preposition-preceded single year → YEAR_ONLY ──
+
+        # Multi-word prepositions (must come before single-word to avoid partial matches)
+        multi_word_preps = [
+            r'as\s+of',
+            r'back\s+to',
+            r'prior\s+to',
+        ]
+        single_word_preps = [
+            'in', 'since', 'by', 'until', 'before', 'after',
+            'during', 'circa', 'around', 'from', 'through',
+        ]
+
+        all_preps = multi_word_preps + [re.escape(p) for p in single_word_preps]
+        prep_pattern = '|'.join(all_preps)
+        pattern_year_only = rf'(?i)\b(?:{prep_pattern})\s+(\d{{4}})\b'
+
+        for match in re.finditer(pattern_year_only, input_text):
+            year = match.group(1)
+            if _valid_year(year):
+                # Skip if this year is already part of a YEAR_RANGE key
+                already_in_range = any(
+                    year in k for k in result if result[k] == DateType.YEAR_RANGE.name
+                )
+                if not already_in_range:
+                    result[year] = DateType.YEAR_ONLY.name
+
+        return result if result else None
+
     def extract_written_dates(self, input_text: str) -> dict[str, DateType]:
         """
         Extract dates with written month names (e.g., 'March 15, 2024').
