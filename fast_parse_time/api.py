@@ -192,6 +192,14 @@ def extract_explicit_dates(text: str) -> Dict[str, str]:
     if iso_result:
         result.update(iso_result)
 
+    # Also try ordinal day patterns (12th day of December, the 3rd of March, Dec 12th, etc.)
+    # Related GitHub Issue:
+    #     #22 - Gap: ordinal day format not supported (12th day of December, 19th day of May)
+    #     https://github.com/craigtrim/fast-parse-time/issues/22
+    ordinal_result = extractor.extract_ordinal_dates(input_text=text)
+    if ordinal_result:
+        result.update(ordinal_result)
+
     return result
 
 
