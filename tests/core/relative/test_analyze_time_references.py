@@ -1,5 +1,6 @@
 """Tests for AnalyzeTimeReferences service covering relative temporal expressions."""
 from fast_parse_time.implicit.svc import AnalyzeTimeReferences
+from fast_parse_time.implicit.dto.index_by_slot_kb import Slot
 
 svc = AnalyzeTimeReferences()
 assert svc
@@ -10,7 +11,7 @@ def test_01():
     d_result = svc.process(input_text)
     assert len(d_result['result']) == 1
     assert d_result['result'] == [
-        {'Cardinality': 5, 'Frame': 'day', 'Tense': 'past'}]
+        Slot(5, 'day', 'past')]
 
 
 def test_02():
@@ -18,7 +19,7 @@ def test_02():
     d_result = svc.process(input_text)
     assert len(d_result['result']) == 1
     assert d_result['result'] == [
-        {'Cardinality': 5, 'Frame': 'minute', 'Tense': 'past'}]
+        Slot(5, 'minute', 'past')]
 
 
 def test_03():
@@ -26,7 +27,7 @@ def test_03():
     d_result = svc.process(input_text)
     assert len(d_result['result']) == 1
     assert d_result['result'] == [
-        {'Cardinality': 30, 'Frame': 'minute', 'Tense': 'past'}]
+        Slot(30, 'minute', 'past')]
 
 
 def test_04():
@@ -34,7 +35,7 @@ def test_04():
     d_result = svc.process(input_text)
     assert len(d_result['result']) == 1
     assert d_result['result'] == [
-        {'Cardinality': 2, 'Frame': 'week', 'Tense': 'past'}]
+        Slot(2, 'week', 'past')]
 
 
 def test_05():
@@ -43,7 +44,7 @@ def test_05():
     d_result = svc.process(input_text)
     assert len(d_result['result']) == 1
     assert d_result['result'] == [
-        {'Cardinality': 3, 'Frame': 'hour', 'Tense': 'past'}]
+        Slot(3, 'hour', 'past')]
 
 
 def test_06():
@@ -52,7 +53,7 @@ def test_06():
     d_result = svc.process(input_text)
     assert len(d_result['result']) == 1
     assert d_result['result'] == [
-        {'Cardinality': 2, 'Frame': 'month', 'Tense': 'past'}]
+        Slot(2, 'month', 'past')]
 
 
 def test_07():
@@ -61,7 +62,7 @@ def test_07():
     d_result = svc.process(input_text)
     assert len(d_result['result']) == 1
     assert d_result['result'] == [
-        {'Cardinality': 1, 'Frame': 'year', 'Tense': 'past'}]
+        Slot(1, 'year', 'past')]
 
 
 def test_08():
@@ -70,7 +71,7 @@ def test_08():
     d_result = svc.process(input_text)
     assert len(d_result['result']) == 1
     assert d_result['result'] == [
-        {'Cardinality': 1, 'Frame': 'day', 'Tense': 'past'}]
+        Slot(1, 'day', 'past')]
 
 
 def test_09():
@@ -79,7 +80,7 @@ def test_09():
     d_result = svc.process(input_text)
     assert len(d_result['result']) == 1
     assert d_result['result'] == [
-        {'Cardinality': 1, 'Frame': 'week', 'Tense': 'future'}]
+        Slot(1, 'week', 'future')]
 
 
 def test_10():
@@ -88,7 +89,7 @@ def test_10():
     d_result = svc.process(input_text)
     assert len(d_result['result']) == 1
     assert d_result['result'] == [
-        {'Cardinality': 10, 'Frame': 'second', 'Tense': 'past'}]
+        Slot(10, 'second', 'past')]
 
 
 def test_11():
@@ -97,7 +98,7 @@ def test_11():
     d_result = svc.process(input_text)
     assert len(d_result['result']) == 1
     assert d_result['result'] == [
-        {'Cardinality': 1, 'Frame': 'week', 'Tense': 'past'}]
+        Slot(1, 'week', 'past')]
 
 
 def test_12():
@@ -106,7 +107,7 @@ def test_12():
     d_result = svc.process(input_text)
     assert len(d_result['result']) == 1
     assert d_result['result'] == [
-        {'Cardinality': 1, 'Frame': 'day', 'Tense': 'past'}]
+        Slot(1, 'day', 'past')]
 
 
 def test_13():
@@ -115,7 +116,7 @@ def test_13():
     d_result = svc.process(input_text)
     assert len(d_result['result']) == 1
     assert d_result['result'] == [
-        {'Cardinality': 1, 'Frame': 'month', 'Tense': 'past'}]
+        Slot(1, 'month', 'past')]
 
 
 def test_14():
@@ -124,7 +125,7 @@ def test_14():
     d_result = svc.process(input_text)
     assert len(d_result['result']) == 1
     assert d_result['result'] == [
-        {'Cardinality': 1, 'Frame': 'day', 'Tense': 'future'}]
+        Slot(1, 'day', 'future')]
 
 
 def test_15():
@@ -133,7 +134,7 @@ def test_15():
     d_result = svc.process(input_text)
     assert len(d_result['result']) == 1
     assert d_result['result'] == [
-        {'Cardinality': 15, 'Frame': 'minute', 'Tense': 'past'}]
+        Slot(15, 'minute', 'past')]
 
 
 def test_16():
@@ -142,7 +143,7 @@ def test_16():
     d_result = svc.process(input_text)
     assert len(d_result['result']) == 1
     assert d_result['result'] == [
-        {'Cardinality': 1, 'Frame': 'week', 'Tense': 'past'}]
+        Slot(1, 'week', 'past')]
 
 
 def main():
