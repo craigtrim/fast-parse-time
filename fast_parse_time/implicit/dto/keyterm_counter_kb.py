@@ -422,4 +422,10 @@ d_keyterm_counter_kb = {
  'morning': 1,
  'afternoon': 1,
  'evening': 1,
- 'night': 1}
+ 'night': 1,
+ # Related GitHub Issue:
+ #     #17 - Gap: end-of-period abbreviations not supported (eod, eom, eoy)
+ #     https://github.com/craigtrim/fast-parse-time/issues/17
+ 'eod': 1,
+ 'eom': 1,
+ 'eoy': 1}
