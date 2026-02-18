@@ -6507,4 +6507,10 @@ d_index_by_slot_kb = {
  'this morning': {'Cardinality': 0, 'Frame': 'day', 'Tense': 'present'},
  'this afternoon': {'Cardinality': 0, 'Frame': 'day', 'Tense': 'present'},
  'this evening': {'Cardinality': 0, 'Frame': 'day', 'Tense': 'present'},
- 'last night': {'Cardinality': 1, 'Frame': 'day', 'Tense': 'past'}}
+ 'last night': {'Cardinality': 1, 'Frame': 'day', 'Tense': 'past'},
+ # Related GitHub Issue:
+ #     #17 - Gap: end-of-period abbreviations not supported (eod, eom, eoy)
+ #     https://github.com/craigtrim/fast-parse-time/issues/17
+ 'eod': {'Cardinality': 0, 'Frame': 'day', 'Tense': 'future'},
+ 'eom': {'Cardinality': 0, 'Frame': 'month', 'Tense': 'future'},
+ 'eoy': {'Cardinality': 0, 'Frame': 'year', 'Tense': 'future'}}
