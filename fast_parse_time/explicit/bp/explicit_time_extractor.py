@@ -290,6 +290,127 @@ class ExplicitTimeExtractor(object):
 
         return {date: DateType.FULL_EXPLICIT_DATE.name for date in matches}
 
+    def extract_ordinal_dates(self, input_text: str) -> dict[str, DateType]:
+        """
+        Extract dates that use ordinal day references (1st, 2nd, 3rd, 4th … 31st).
+
+        Handles four pattern families:
+
+        1. ``NNth day of Month[,] [YYYY]``
+           e.g. ``12th day of December, 2001``, ``3rd day of March``
+
+        2. ``[the] NNth of Month [YYYY]``
+           e.g. ``the 12th of December``, ``2nd of February 2023``
+
+        3. ``Month NNth`` (no year)
+           e.g. ``December 12th``, ``Dec 12th``, ``Oct 23rd``
+
+        4. ``NNth Month`` (no year)
+           e.g. ``3rd March``, ``1st Jan``, ``25th December``
+
+        Classification:
+        - Pattern includes a 4-digit year → ``FULL_EXPLICIT_DATE``
+        - Pattern has no year → ``DAY_MONTH``
+
+        Matching is case-insensitive.  All ordinal suffixes (st/nd/rd/th) are accepted.
+        Day values outside 1–31 are silently ignored.
+
+        Args:
+            input_text (str): The input text to search.
+
+        Returns:
+            dict: Mapping of matched strings to DateType names, or None.
+
+        Related GitHub Issue:
+            #22 - Gap: ordinal day format not supported (12th day of December, 19th day of May)
+            https://github.com/craigtrim/fast-parse-time/issues/22
+        """
+        if not input_text or not isinstance(input_text, str):
+            return None
+
+        month_pat = '|'.join(sorted(MONTH_NAMES, key=len, reverse=True))
+
+        def _valid_day(s: str) -> bool:
+            return 1 <= int(s) <= 31
+
+        def _valid_year(s: str) -> bool:
+            try:
+                return MIN_YEAR <= int(s) <= MAX_YEAR
+            except ValueError:
+                return False
+
+        result = {}
+
+        # ── Pattern 1: NNth day of Month[,] [YYYY] ───────────────────────────
+        pat1 = re.compile(
+            r'\b(\d{1,2})(?:st|nd|rd|th)\s+day\s+of\s+'
+            r'(' + month_pat + r')'
+            r'(?:,?\s+(\d{4}))?',
+            re.IGNORECASE,
+        )
+        for m in pat1.finditer(input_text):
+            day, year = m.group(1), m.group(3)
+            if not _valid_day(day):
+                continue
+            if year and _valid_year(year):
+                result[m.group()] = DateType.FULL_EXPLICIT_DATE.name
+            else:
+                result[m.group()] = DateType.DAY_MONTH.name
+
+        # ── Pattern 2: [the] NNth of Month [YYYY] ────────────────────────────
+        pat2 = re.compile(
+            r'(?:the\s+)?(\d{1,2})(?:st|nd|rd|th)\s+of\s+'
+            r'(' + month_pat + r')'
+            r'(?:\s+(\d{4}))?\b',
+            re.IGNORECASE,
+        )
+        for m in pat2.finditer(input_text):
+            day, year = m.group(1), m.group(3)
+            if not _valid_day(day):
+                continue
+            if year and _valid_year(year):
+                result[m.group()] = DateType.FULL_EXPLICIT_DATE.name
+            else:
+                result[m.group()] = DateType.DAY_MONTH.name
+
+        # ── Pattern 3: Month NNth (no year) ──────────────────────────────────
+        # Negative lookahead prevents matching when a 4-digit year follows
+        # (those are handled by the existing extract_written_dates pipeline).
+        pat3 = re.compile(
+            r'\b(' + month_pat + r')\s+(\d{1,2})(?:st|nd|rd|th)\b'
+            r'(?!\s*,?\s*\d{4})',
+            re.IGNORECASE,
+        )
+        for m in pat3.finditer(input_text):
+            day = m.group(2)
+            if not _valid_day(day):
+                continue
+            result[m.group()] = DateType.DAY_MONTH.name
+
+        # ── Pattern 4: NNth Month (no year) ──────────────────────────────────
+        # Negative lookahead prevents matching when a 4-digit year follows.
+        # "of" before the month is excluded (those are patterns 1/2).
+        pat4 = re.compile(
+            r'\b(\d{1,2})(?:st|nd|rd|th)\s+(' + month_pat + r')\b'
+            r'(?!\s+\d{4})',
+            re.IGNORECASE,
+        )
+        for m in pat4.finditer(input_text):
+            day = m.group(1)
+            if not _valid_day(day):
+                continue
+            # Skip if the ordinal is part of 'NNth of Month' (pattern 2)
+            # by checking whether 'of' immediately precedes the month token.
+            before_match = input_text[:m.start(2)].rstrip()
+            if re.search(r'\bof\s*$', before_match, re.IGNORECASE):
+                continue
+            # Skip if 'day of' precedes (pattern 1 territory)
+            if re.search(r'\bday\s+of\s*$', before_match, re.IGNORECASE):
+                continue
+            result[m.group()] = DateType.DAY_MONTH.name
+
+        return result if result else None
+
     def extract_written_dates(self, input_text: str) -> dict[str, DateType]:
         """
         Extract dates with written month names (e.g., 'March 15, 2024').
