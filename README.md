@@ -5,7 +5,7 @@
 [![Downloads](https://pepy.tech/badge/fast-parse-time)](https://pepy.tech/project/fast-parse-time)
 [![Downloads](https://pepy.tech/badge/fast-parse-time/month)](https://pepy.tech/project/fast-parse-time)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://img.shields.io/badge/tests-413-brightgreen.svg)](https://github.com/craigtrim/fast-parse-time/tree/master/tests)
+[![Tests](https://img.shields.io/badge/tests-1394-brightgreen.svg)](https://github.com/craigtrim/fast-parse-time/tree/master/tests)
 
 Extract dates and times from text. Fast, deterministic, zero cost.
 
