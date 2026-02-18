@@ -174,6 +174,11 @@ def extract_explicit_dates(text: str) -> Dict[str, str]:
     if written_result:
         result.update(written_result)
 
+    # Also try hyphen-delimited month-year formats (Oct-23, 2023-Oct, March-2023, etc.)
+    hyphen_result = extractor.extract_hyphen_month_year(input_text=text)
+    if hyphen_result:
+        result.update(hyphen_result)
+
     return result
 
 
