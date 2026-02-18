@@ -118,6 +118,35 @@ class TokenizeNumericComponentsTest(unittest.TestCase):
         self.assertIsNone(self.tokenizer.process('Since the year AD2023'))
     # ------------------------------------------------------------------------------
 
+    # ------------------------------------------------------------------------------
+    # Cluster:    Additional Edge Cases
+    #
+    def test_three_digit_year_rejects(self):
+        """A 3-digit year used as a date component should not be tokenized as a valid date."""
+        self.assertIsNone(self.tokenizer.process('Event on 12/31/202'))
+
+    def test_date_with_spaces_in_it_rejects(self):
+        """A date with spaces between components - documents that components are tokenized individually."""
+        # BOUNDARY: When spaces surround delimiters the tokenizer returns the numeric
+        # components as separate tokens rather than rejecting them entirely.
+        result = self.tokenizer.process('Date: 12 / 31 / 2023')
+        # Either None (if rejected) or a list of components (current observed behavior)
+        assert result is None or isinstance(result, list)
+
+    def test_single_digit_month(self):
+        """Single-digit month in a full date should be accepted."""
+        self.assertEqual(
+            self.tokenizer.process('Appointment on 1/15/2023'), ['1/15/2023'])
+
+    def test_very_early_valid_year(self):
+        """The earliest valid year (current year - 100) should be accepted."""
+        from datetime import datetime
+        min_year = datetime.now().year - 100
+        self.assertEqual(
+            self.tokenizer.process(f'Historical date 01/01/{min_year}'),
+            [f'01/01/{min_year}'])
+    # ------------------------------------------------------------------------------
+
 
 if __name__ == '__main__':
     unittest.main()

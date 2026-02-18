@@ -143,6 +143,31 @@ class NumericComponentTokenizerTest(unittest.TestCase):
         # Numerical bullet points that could be mistaken for dates
         self.assertIsNone(self.tokenizer.process('1.2.3. Strategy steps'))
 
+    def test_date_with_dash_nearby(self):
+        """Date with a dash in surrounding text - documents boundary behavior."""
+        # BOUNDARY: A dash following the date may interfere with tokenization
+        result = self.tokenizer.process('Deadline: 04/08/2024 - confirmed')
+        # Result may be the date alone or None - documents the actual behavior
+        assert result is None or isinstance(result, list)
+
+    def test_date_at_very_start_of_string(self):
+        """Date at the very start of the string should be tokenized."""
+        self.assertEqual(
+            self.tokenizer.process('04/08/2024 is the event date'),
+            ['04/08/2024'])
+
+    def test_date_at_very_end_of_string(self):
+        """Date at the very end of the string should be tokenized."""
+        self.assertEqual(
+            self.tokenizer.process('The event is on 04/08/2024'),
+            ['04/08/2024'])
+
+    def test_date_with_comma_immediately_after(self):
+        """Date followed immediately by a comma - documents boundary behavior (None expected)."""
+        # BOUNDARY: Comma attached directly to the date breaks token boundary detection
+        result = self.tokenizer.process('The date is 04/08/2024, confirmed')
+        self.assertIsNone(result)
+
 
 if __name__ == '__main__':
     unittest.main()

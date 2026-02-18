@@ -147,6 +147,41 @@ def test_backward_compatibility():
     assert result == {'3/24': 'MONTH_DAY'}
 
 
+def test_extract_future_references_filters_correctly():
+    """extract_future_references should return only future-tense references."""
+    result = extract_future_references('next week and 5 days ago')
+    assert len(result) == 1
+    assert result[0].tense == 'future'
+    assert result[0].frame == 'week'
+
+
+def test_extract_past_references_filters_correctly():
+    """extract_past_references should return only past-tense references."""
+    result = extract_past_references('5 days ago and next month')
+    assert len(result) == 1
+    assert result[0].tense == 'past'
+    assert result[0].cardinality == 5
+
+
+def test_has_temporal_info_edge_cases():
+    """has_temporal_info should handle various edge cases correctly."""
+    assert has_temporal_info('') is False
+    assert has_temporal_info('   ') is False
+    assert has_temporal_info('yesterday') is True
+    assert has_temporal_info('tomorrow') is True
+    assert has_temporal_info('next week') is True
+    assert has_temporal_info('no dates here') is False
+
+
+def test_parse_time_references_word_numbers():
+    """parse_time_references should handle word numbers like 'two days ago'."""
+    times = parse_time_references('two days ago')
+    assert len(times) == 1
+    assert times[0].cardinality == 2
+    assert times[0].frame == 'day'
+    assert times[0].tense == 'past'
+
+
 if __name__ == '__main__':
     test_parse_dates()
     test_parse_time_references()
@@ -161,4 +196,8 @@ if __name__ == '__main__':
     test_parse_and_resolve()
     test_relative_time_to_datetime()
     test_backward_compatibility()
+    test_extract_future_references_filters_correctly()
+    test_extract_past_references_filters_correctly()
+    test_has_temporal_info_edge_cases()
+    test_parse_time_references_word_numbers()
     print('All new API tests passed!')

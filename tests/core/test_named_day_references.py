@@ -109,5 +109,73 @@ class TestTenseHandling:
         assert result[0].tense == 'future'
 
 
+class TestYesterdayPositionVariations:
+    """Tests for 'yesterday' at different positions within a sentence."""
+
+    def test_yesterday_at_end_of_sentence(self):
+        """'yesterday' at the end of a sentence should be extracted."""
+        result = parse_time_references('the meeting was held yesterday')
+        assert len(result) == 1
+        assert result[0].frame == 'day'
+        assert result[0].tense == 'past'
+
+    def test_yesterday_at_start_of_sentence(self):
+        """'yesterday' at the start of a sentence should be extracted."""
+        result = parse_time_references('yesterday the system crashed')
+        assert len(result) == 1
+        assert result[0].frame == 'day'
+        assert result[0].tense == 'past'
+
+    def test_yesterday_mid_sentence(self):
+        """'yesterday' in the middle of a sentence should be extracted."""
+        result = parse_time_references('we noticed yesterday that performance dropped')
+        assert len(result) == 1
+        assert result[0].frame == 'day'
+        assert result[0].tense == 'past'
+
+
+class TestTodayPositionVariations:
+    """Tests for 'today' at different positions within a sentence."""
+
+    def test_today_at_start_of_sentence(self):
+        """'today' at the start of a sentence should be extracted."""
+        result = parse_time_references('today is the deadline')
+        assert len(result) == 1
+        assert result[0].frame == 'day'
+        assert result[0].tense == 'present'
+
+    def test_today_at_end_of_sentence(self):
+        """'today' at the end of a sentence should be extracted."""
+        result = parse_time_references('we need to finish today')
+        assert len(result) == 1
+        assert result[0].frame == 'day'
+        assert result[0].tense == 'present'
+
+
+class TestTomorrowPositionVariations:
+    """Tests for 'tomorrow' at different positions and combinations."""
+
+    def test_tomorrow_at_start_of_sentence(self):
+        """'tomorrow' at the start of a sentence should be extracted."""
+        result = parse_time_references('tomorrow we deploy the fix')
+        assert len(result) == 1
+        assert result[0].frame == 'day'
+        assert result[0].tense == 'future'
+
+    def test_tomorrow_morning_frame_and_tense(self):
+        """'tomorrow morning' should still return frame=day and tense=future."""
+        result = parse_time_references('the call is tomorrow morning')
+        assert len(result) >= 1
+        tomorrow_refs = [r for r in result if r.frame == 'day' and r.tense == 'future']
+        assert len(tomorrow_refs) >= 1
+
+    def test_tomorrow_at_end_of_sentence(self):
+        """'tomorrow' at the end of a sentence should be extracted."""
+        result = parse_time_references('can we reschedule for tomorrow')
+        assert len(result) == 1
+        assert result[0].frame == 'day'
+        assert result[0].tense == 'future'
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])

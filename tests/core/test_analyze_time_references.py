@@ -1,3 +1,4 @@
+"""Tests for AnalyzeTimeReferences service covering relative temporal expressions."""
 from fast_parse_time.implicit.svc import AnalyzeTimeReferences
 
 svc = AnalyzeTimeReferences()
@@ -36,11 +37,131 @@ def test_04():
         {'Cardinality': 2, 'Frame': 'week', 'Tense': 'past'}]
 
 
+def test_05():
+    """3 hours ago should resolve to cardinality 3, frame hour, tense past."""
+    input_text = 'something happened 3 hours ago'
+    d_result = svc.process(input_text)
+    assert len(d_result['result']) == 1
+    assert d_result['result'] == [
+        {'Cardinality': 3, 'Frame': 'hour', 'Tense': 'past'}]
+
+
+def test_06():
+    """2 months ago should resolve to cardinality 2, frame month, tense past."""
+    input_text = 'I signed up 2 months ago'
+    d_result = svc.process(input_text)
+    assert len(d_result['result']) == 1
+    assert d_result['result'] == [
+        {'Cardinality': 2, 'Frame': 'month', 'Tense': 'past'}]
+
+
+def test_07():
+    """last year should resolve to cardinality 1, frame year, tense past."""
+    input_text = 'this started last year'
+    d_result = svc.process(input_text)
+    assert len(d_result['result']) == 1
+    assert d_result['result'] == [
+        {'Cardinality': 1, 'Frame': 'year', 'Tense': 'past'}]
+
+
+def test_08():
+    """yesterday should resolve to cardinality 1, frame day, tense past."""
+    input_text = 'I saw that yesterday'
+    d_result = svc.process(input_text)
+    assert len(d_result['result']) == 1
+    assert d_result['result'] == [
+        {'Cardinality': 1, 'Frame': 'day', 'Tense': 'past'}]
+
+
+def test_09():
+    """next week should resolve to cardinality 1, frame week, tense future."""
+    input_text = 'let us meet next week'
+    d_result = svc.process(input_text)
+    assert len(d_result['result']) == 1
+    assert d_result['result'] == [
+        {'Cardinality': 1, 'Frame': 'week', 'Tense': 'future'}]
+
+
+def test_10():
+    """10 seconds ago should resolve to cardinality 10, frame second, tense past."""
+    input_text = 'the alert fired 10 seconds ago'
+    d_result = svc.process(input_text)
+    assert len(d_result['result']) == 1
+    assert d_result['result'] == [
+        {'Cardinality': 10, 'Frame': 'second', 'Tense': 'past'}]
+
+
+def test_11():
+    """last week should resolve to cardinality 1, frame week, tense past."""
+    input_text = 'show me everything from last week'
+    d_result = svc.process(input_text)
+    assert len(d_result['result']) == 1
+    assert d_result['result'] == [
+        {'Cardinality': 1, 'Frame': 'week', 'Tense': 'past'}]
+
+
+def test_12():
+    """1 day ago should resolve to cardinality 1, frame day, tense past."""
+    input_text = 'the job ran 1 day ago'
+    d_result = svc.process(input_text)
+    assert len(d_result['result']) == 1
+    assert d_result['result'] == [
+        {'Cardinality': 1, 'Frame': 'day', 'Tense': 'past'}]
+
+
+def test_13():
+    """last month should resolve to cardinality 1, frame month, tense past."""
+    input_text = 'revenue was down last month'
+    d_result = svc.process(input_text)
+    assert len(d_result['result']) == 1
+    assert d_result['result'] == [
+        {'Cardinality': 1, 'Frame': 'month', 'Tense': 'past'}]
+
+
+def test_14():
+    """tomorrow should resolve to cardinality 1, frame day, tense future."""
+    input_text = 'the deployment is tomorrow'
+    d_result = svc.process(input_text)
+    assert len(d_result['result']) == 1
+    assert d_result['result'] == [
+        {'Cardinality': 1, 'Frame': 'day', 'Tense': 'future'}]
+
+
+def test_15():
+    """15 minutes ago should resolve to cardinality 15, frame minute, tense past."""
+    input_text = 'the server went down 15 minutes ago'
+    d_result = svc.process(input_text)
+    assert len(d_result['result']) == 1
+    assert d_result['result'] == [
+        {'Cardinality': 15, 'Frame': 'minute', 'Tense': 'past'}]
+
+
+def test_16():
+    """a week ago should resolve to cardinality 1, frame week, tense past."""
+    input_text = 'we launched a week ago'
+    d_result = svc.process(input_text)
+    assert len(d_result['result']) == 1
+    assert d_result['result'] == [
+        {'Cardinality': 1, 'Frame': 'week', 'Tense': 'past'}]
+
+
 def main():
     test_01()
     test_02()
     test_03()
     test_04()
+    test_05()
+    test_06()
+    test_07()
+    test_08()
+    test_09()
+    test_10()
+    test_11()
+    test_12()
+    test_13()
+    test_14()
+    test_15()
+    test_16()
 
 
 if __name__ == '__main__':

@@ -158,5 +158,107 @@ class TestCapitalizationVariations:
         assert result[0].tense == 'past'
 
 
+class TestFewWithFrame:
+    """Tests for 'few X ago' with additional frames."""
+
+    def test_few_hours_ago(self):
+        """'a few hours ago' should resolve to 3 hours."""
+        result = parse_time_references('a few hours ago')
+        assert len(result) == 1
+        assert result[0].cardinality == 3
+        assert result[0].frame == 'hour'
+        assert result[0].tense == 'past'
+
+    def test_few_months_ago(self):
+        """'a few months ago' should resolve to 3 months."""
+        result = parse_time_references('a few months ago')
+        assert len(result) == 1
+        assert result[0].cardinality == 3
+        assert result[0].frame == 'month'
+        assert result[0].tense == 'past'
+
+    def test_few_years_ago(self):
+        """'a few years ago' should resolve to 3 years."""
+        result = parse_time_references('a few years ago')
+        assert len(result) == 1
+        assert result[0].cardinality == 3
+        assert result[0].frame == 'year'
+        assert result[0].tense == 'past'
+
+
+class TestHalfAYear:
+    """Tests for 'half a year ago' pattern."""
+
+    def test_half_a_year_ago(self):
+        """'half a year ago' - documents current behavior (resolves as 1 year past)."""
+        # NOTE: 'half a year' is currently interpreted as 1 year (not 6 months)
+        # because 'a year' is matched as a unit and 'half' modifies the cardinality
+        # to a non-standard value that is rounded to 1.
+        result = parse_time_references('half a year ago')
+        assert len(result) == 1
+        assert result[0].frame == 'year'
+        assert result[0].tense == 'past'
+
+
+class TestSeveralWithHourFrame:
+    """Tests for 'several hours ago' pattern."""
+
+    def test_several_hours_ago(self):
+        """'several hours ago' should resolve to 3 hours."""
+        result = parse_time_references('several hours ago')
+        assert len(result) == 1
+        assert result[0].cardinality == 3
+        assert result[0].frame == 'hour'
+        assert result[0].tense == 'past'
+
+
+class TestCoupleAdditionalFrames:
+    """Tests for 'couple of X ago' with additional frames."""
+
+    def test_couple_of_days_ago(self):
+        """'couple of days ago' should resolve to 2 days."""
+        result = parse_time_references('couple of days ago')
+        assert len(result) == 1
+        assert result[0].cardinality == 2
+        assert result[0].frame == 'day'
+        assert result[0].tense == 'past'
+
+    def test_couple_of_months_ago(self):
+        """'couple of months ago' should resolve to 2 months."""
+        result = parse_time_references('couple of months ago')
+        assert len(result) == 1
+        assert result[0].cardinality == 2
+        assert result[0].frame == 'month'
+        assert result[0].tense == 'past'
+
+
+class TestInformalSentenceContext:
+    """Tests for informal expressions within sentence context."""
+
+    def test_few_hours_in_sentence(self):
+        """'a few hours ago' within a sentence should be extracted."""
+        result = parse_time_references('the outage started a few hours ago')
+        assert len(result) == 1
+        assert result[0].cardinality == 3
+        assert result[0].frame == 'hour'
+        assert result[0].tense == 'past'
+
+    def test_couple_of_days_in_sentence(self):
+        """'couple of days ago' within a sentence should be extracted."""
+        result = parse_time_references('we updated that a couple of days ago')
+        assert len(result) == 1
+        assert result[0].cardinality == 2
+        assert result[0].frame == 'day'
+        assert result[0].tense == 'past'
+
+    def test_several_hours_in_sentence(self):
+        """'several hours ago' within a sentence should be extracted."""
+        result = parse_time_references('the backup completed several hours ago')
+        assert len(result) == 1
+        assert result[0].cardinality == 3
+        assert result[0].frame == 'hour'
+        assert result[0].tense == 'past'
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
