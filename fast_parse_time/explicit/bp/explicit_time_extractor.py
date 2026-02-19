@@ -496,3 +496,88 @@ class ExplicitTimeExtractor(object):
             f"Written Date Classification for '{input_text}' is {result} in {str(sw)}")
 
         return result
+
+    def extract_space_month_number(self, input_text: str) -> dict[str, str]:
+        """
+        Extract space-delimited MonthName + 2-digit-number patterns from text.
+
+        Classifies based on available evidence, in priority order:
+
+        1. NN > 31 → ``MONTH_YEAR`` (impossible calendar day, must be year)
+        2. Preposition "in" → ``MONTH_YEAR`` ("in" signals a time period, not a day)
+        3. Preposition "on" → ``DAY_MONTH`` ("on" signals a specific calendar day)
+        4. No context, NN ≤ 31 → ``DAY_MONTH_AMBIGUOUS``
+
+        2-digit years are accepted as-is (interpreted as 2000+NN by callers).
+        4-digit years are handled by the existing ``extract_written_dates`` pipeline
+        and are intentionally excluded here (pattern requires exactly 2-digit NN).
+
+        Matching is case-insensitive for both month names and prepositions.
+
+        Args:
+            input_text (str): The input text to search.
+
+        Returns:
+            dict: Mapping of matched date strings to DateType names, or None.
+
+        Examples:
+            >>> extractor.extract_space_month_number('Oct 99')
+            {'Oct 99': 'MONTH_YEAR'}
+            >>> extractor.extract_space_month_number('in Oct 23')
+            {'Oct 23': 'MONTH_YEAR'}
+            >>> extractor.extract_space_month_number('on Oct 23')
+            {'Oct 23': 'DAY_MONTH'}
+            >>> extractor.extract_space_month_number('Oct 23')
+            {'Oct 23': 'DAY_MONTH_AMBIGUOUS'}
+
+        Related GitHub Issue:
+            #38 - Gap: space-delimited MonthName+2-digit-number not classified
+            https://github.com/craigtrim/fast-parse-time/issues/38
+        """
+        if not input_text or not isinstance(input_text, str):
+            return None
+
+        # Build month-name alternation, longest-first to avoid partial matches
+        month_pattern = '|'.join(sorted(MONTH_NAMES, key=len, reverse=True))
+
+        # Match optional preposition + MonthName + exactly 2-digit number.
+        # Negative lookahead 1: exclude more digits (NN must be exactly 2 digits).
+        # Negative lookahead 2: exclude ordinal suffixes (st/nd/rd/th) — those are
+        #   handled by extract_ordinal_dates() and extract_written_dates().
+        # Negative lookahead 3: exclude cases where NN is followed by optional
+        #   comma/space and a 4-digit year — e.g. "March 15, 2024" must not also
+        #   yield a spurious "March 15" hit.
+        pattern = (
+            rf'(?i)'
+            rf'(?:(?P<prep>in|on)\s+)?'
+            rf'(?P<month>{month_pattern})\s+'
+            rf'(?P<nn>\d{{2}})'
+            rf'(?!\d)'           # not followed by more digits
+            rf'(?!(?:st|nd|rd|th))'  # not followed by ordinal suffix
+            rf'(?!,?\s*\d{{4}})'     # not followed by (optional comma +) 4-digit year
+        )
+
+        result = {}
+
+        for match in re.finditer(pattern, input_text):
+            prep = (match.group('prep') or '').lower()
+            month_tok = match.group('month')
+            nn_tok = match.group('nn')
+            nn = int(nn_tok)
+
+            matched_text = f'{month_tok} {nn_tok}'
+
+            # Priority 1: NN > 31 → unambiguously a year
+            if nn > 31:
+                result[matched_text] = DateType.MONTH_YEAR.name
+            # Priority 2: preposition "in" → year context
+            elif prep == 'in':
+                result[matched_text] = DateType.MONTH_YEAR.name
+            # Priority 3: preposition "on" → day context
+            elif prep == 'on':
+                result[matched_text] = DateType.DAY_MONTH.name
+            # Priority 4: no context → ambiguous
+            else:
+                result[matched_text] = DateType.DAY_MONTH_AMBIGUOUS.name
+
+        return result if result else None
