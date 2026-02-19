@@ -33,7 +33,10 @@ _COMPOUND_UNIT_WORDS = {
 _COMPOUND_CONNECTORS = {'and'}
 
 # Past tense terminal markers
-_PAST_MARKERS = {'ago', 'back'}
+# Related GitHub Issue:
+#     #58 - Support 'before' as past-tense marker and singular uninflected time frames
+#     https://github.com/craigtrim/fast-parse-time/issues/58
+_PAST_MARKERS = {'ago', 'back', 'before'}
 
 # Future tense terminal suffix tokens (requires preceding 'from')
 _FUTURE_TERMINALS = {'now', 'today'}
@@ -127,7 +130,10 @@ class AnalyzeTimeReferences(object):
         """
         # Pattern to detect if a tense marker follows the compact token
         # Looks for: compact token + optional whitespace + tense marker
-        tense_markers_pattern = r'\b(ago|back)\b'
+        # Related GitHub Issue:
+        #     #58 - Support 'before' as past-tense marker and singular uninflected time frames
+        #     https://github.com/craigtrim/fast-parse-time/issues/58
+        tense_markers_pattern = r'\b(ago|back|before)\b'
 
         def replace_compact_token(match):
             """Replace a compact token with expanded form."""

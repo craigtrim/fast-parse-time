@@ -244,20 +244,55 @@ class ExplicitTimeExtractor(object):
         # "YYYY-YY" abbreviated second year — e.g., "2025-26", "1999-00"
         # Uses century-rollover: 1999-00 → 1900+0=1900 ≤ 1999 → add 100 → 2000
         #
-        # Guard: if the 2-digit component is a valid calendar month (01–12) the
+        # Guard 1: if the 2-digit component is a valid calendar month (01–12) the
         # token is a YYYY-MM partial ISO 8601 date, NOT a year range.  We skip it
         # here so the ISO 8601 extractor can classify it correctly.
         #
         # Related GitHub Issue:
         #     #52 - Bug: YYYY-MM falsely matched as YEAR_RANGE for years <= 2000
         #     https://github.com/craigtrim/fast-parse-time/issues/52
+        #
+        # Guard 2: if the match appears within a written-month date range context
+        # (e.g., "31 Oct 2021 - 28 Nov 2021" → "2021-28"), skip it to avoid false
+        # positives. Check for month names before the year and after the 2-digit part.
+        #
+        # Related GitHub Issue:
+        #     #61 - False positive: written-month date range with hyphen triggers spurious YEAR_RANGE
+        #     https://github.com/craigtrim/fast-parse-time/issues/61
         pattern_abbrev = r'\b(\d{4})-(\d{2})\b'
         for match in re.finditer(pattern_abbrev, input_text):
             y1_full = int(match.group(1))
             y2_abbrev = int(match.group(2))
 
-            # Skip valid month values (01–12): those are YYYY-MM, not YYYY-YY
+            # Guard 1: Skip valid month values (01–12): those are YYYY-MM, not YYYY-YY
             if 1 <= y2_abbrev <= 12:
+                continue
+
+            # Guard 2: Check if this match is part of a written-month date range
+            # Pattern: "D Month YYYY - D Month YYYY" → after normalization → "D Month YYYY-D"
+            # We look for month names within a reasonable window before and after the match
+            match_start = match.start()
+            match_end = match.end()
+
+            # Look back ~20 chars for a month name before the year
+            # (allows for "day + month + space" like "31 Oct 2021")
+            lookback_start = max(0, match_start - 20)
+            lookback_text = input_text[lookback_start:match_start].lower()
+
+            # Look forward ~20 chars for a month name after the 2-digit part
+            # (allows for "space + month" like "28 Nov")
+            lookforward_end = min(len(input_text), match_end + 20)
+            lookforward_text = input_text[match_end:lookforward_end].lower()
+
+            # Import month names from dto
+            from fast_parse_time.explicit.dto import MONTH_NAMES
+
+            # Check if any month name appears in the context
+            has_month_before = any(month in lookback_text for month in MONTH_NAMES)
+            has_month_after = any(month in lookforward_text for month in MONTH_NAMES)
+
+            # If both month names are present, this is likely a false positive
+            if has_month_before and has_month_after:
                 continue
 
             century = (y1_full // 100) * 100
