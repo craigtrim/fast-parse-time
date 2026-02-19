@@ -202,6 +202,17 @@ def extract_explicit_dates(text: str) -> Dict[str, str]:
     if ordinal_result:
         result.update(ordinal_result)
 
+    # Also try space-delimited MonthName + 2-digit-number patterns (Oct 23, March 15, etc.)
+    # Related GitHub Issue:
+    #     #38 - Gap: space-delimited MonthName+2-digit-number not classified
+    #     https://github.com/craigtrim/fast-parse-time/issues/38
+    space_month_result = extractor.extract_space_month_number(input_text=text)
+    if space_month_result:
+        # Only add keys not already classified by earlier (higher-priority) extractors
+        for key, val in space_month_result.items():
+            if key not in result:
+                result[key] = val
+
     return result
 
 
