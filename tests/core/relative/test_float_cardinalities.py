@@ -1,16 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 """
-Tests for Issue #15: Float/decimal cardinalities not supported.
+Tests for Issue #15 and #59: Float/decimal cardinalities support.
 
 parsedatetime accepts floating-point values as cardinalities. fast-parse-time
 must accept inputs like '7.2 days ago', '22.355 hours ago', '4.8 months ago'
-and return a rounded integer cardinality.
+and return a truncated integer cardinality.
 
-Rounding rule: Python built-in round() (banker's rounding).
-    - 7.2  → 7,  7.8  → 8
-    - 2.5  → 2,  3.5  → 4  (round half to even)
-    - 4.8  → 5,  22.355 → 22
+Truncation rule (updated in #59): int(float()) which discards fractional part.
+    - 7.2  → 7,  7.8  → 7  (truncate, not round)
+    - 2.5  → 2,  3.5  → 3  (truncate, not round)
+    - 4.8  → 4,  22.355 → 22  (truncate, not round)
+    - 1.99 → 1,  0.99  → 0  (truncate, not round)
 
 Covered forms:
     - X.X [unit] ago            (explicit past)
@@ -26,7 +27,8 @@ Out of scope:
 
 Related GitHub Issues:
     #15 - Gap: float/decimal cardinalities not supported
-    https://github.com/craigtrim/fast-parse-time/issues/15
+    #59 - Support decimal/float cardinalities in relative time expressions (truncation)
+    https://github.com/craigtrim/fast-parse-time/issues/59
 """
 
 import pytest
@@ -57,7 +59,7 @@ def test_float_days_past_7_2():
 def test_float_days_past_7_8():
     result = parse_time_references('7.8 days ago')
     assert len(result) == 1
-    assert result[0].cardinality == 8
+    assert result[0].cardinality == 7
     assert result[0].frame == 'day'
     assert result[0].tense == 'past'
 
@@ -89,7 +91,7 @@ def test_float_days_past_3_3():
 def test_float_days_past_5_7():
     result = parse_time_references('5.7 days ago')
     assert len(result) == 1
-    assert result[0].cardinality == 6
+    assert result[0].cardinality == 5
     assert result[0].frame == 'day'
     assert result[0].tense == 'past'
 
@@ -105,17 +107,16 @@ def test_float_days_past_14_2():
 def test_float_days_past_30_6():
     result = parse_time_references('30.6 days ago')
     assert len(result) == 1
-    assert result[0].cardinality == 31
+    assert result[0].cardinality == 30
     assert result[0].frame == 'day'
     assert result[0].tense == 'past'
 
 
 def test_float_days_past_0_9():
     result = parse_time_references('0.9 days ago')
-    assert len(result) == 1
-    assert result[0].cardinality == 1
-    assert result[0].frame == 'day'
-    assert result[0].tense == 'past'
+    # 0.X truncates to 0, which is rejected as invalid cardinality
+    assert len(result) == 0
+
 
 
 def test_float_days_past_100_4():
@@ -129,7 +130,7 @@ def test_float_days_past_100_4():
 def test_float_days_past_10_6():
     result = parse_time_references('10.6 days ago')
     assert len(result) == 1
-    assert result[0].cardinality == 11
+    assert result[0].cardinality == 10
     assert result[0].frame == 'day'
     assert result[0].tense == 'past'
 
@@ -145,7 +146,7 @@ def test_float_days_past_21_3():
 def test_float_days_past_90_8():
     result = parse_time_references('90.8 days ago')
     assert len(result) == 1
-    assert result[0].cardinality == 91
+    assert result[0].cardinality == 90
     assert result[0].frame == 'day'
     assert result[0].tense == 'past'
 
@@ -161,7 +162,7 @@ def test_float_days_past_365_2():
 def test_float_days_past_6_6():
     result = parse_time_references('6.6 days ago')
     assert len(result) == 1
-    assert result[0].cardinality == 7
+    assert result[0].cardinality == 6
     assert result[0].frame == 'day'
     assert result[0].tense == 'past'
 
@@ -181,7 +182,7 @@ def test_float_minutes_past_58_4():
 def test_float_minutes_past_30_7():
     result = parse_time_references('30.7 minutes ago')
     assert len(result) == 1
-    assert result[0].cardinality == 31
+    assert result[0].cardinality == 30
     assert result[0].frame == 'minute'
     assert result[0].tense == 'past'
 
@@ -197,7 +198,7 @@ def test_float_minutes_past_15_2():
 def test_float_minutes_past_45_8():
     result = parse_time_references('45.8 minutes ago')
     assert len(result) == 1
-    assert result[0].cardinality == 46
+    assert result[0].cardinality == 45
     assert result[0].frame == 'minute'
     assert result[0].tense == 'past'
 
@@ -213,7 +214,7 @@ def test_float_minutes_past_10_1():
 def test_float_minutes_past_2_7():
     result = parse_time_references('2.7 minutes ago')
     assert len(result) == 1
-    assert result[0].cardinality == 3
+    assert result[0].cardinality == 2
     assert result[0].frame == 'minute'
     assert result[0].tense == 'past'
 
@@ -229,7 +230,7 @@ def test_float_minutes_past_90_3():
 def test_float_minutes_past_5_9():
     result = parse_time_references('5.9 minutes ago')
     assert len(result) == 1
-    assert result[0].cardinality == 6
+    assert result[0].cardinality == 5
     assert result[0].frame == 'minute'
     assert result[0].tense == 'past'
 
@@ -245,23 +246,22 @@ def test_float_minutes_past_1_4():
 def test_float_minutes_past_120_6():
     result = parse_time_references('120.6 minutes ago')
     assert len(result) == 1
-    assert result[0].cardinality == 121
+    assert result[0].cardinality == 120
     assert result[0].frame == 'minute'
     assert result[0].tense == 'past'
 
 
 def test_float_minutes_past_0_9():
     result = parse_time_references('0.9 minutes ago')
-    assert len(result) == 1
-    assert result[0].cardinality == 1
-    assert result[0].frame == 'minute'
-    assert result[0].tense == 'past'
+    # 0.X truncates to 0, which is rejected as invalid cardinality
+    assert len(result) == 0
+
 
 
 def test_float_minutes_past_59_9():
     result = parse_time_references('59.9 minutes ago')
     assert len(result) == 1
-    assert result[0].cardinality == 60
+    assert result[0].cardinality == 59
     assert result[0].frame == 'minute'
     assert result[0].tense == 'past'
 
@@ -289,7 +289,7 @@ def test_float_hours_past_22_355():
 def test_float_hours_past_3_7():
     result = parse_time_references('3.7 hours ago')
     assert len(result) == 1
-    assert result[0].cardinality == 4
+    assert result[0].cardinality == 3
     assert result[0].frame == 'hour'
     assert result[0].tense == 'past'
 
@@ -305,17 +305,16 @@ def test_float_hours_past_12_2():
 def test_float_hours_past_6_8():
     result = parse_time_references('6.8 hours ago')
     assert len(result) == 1
-    assert result[0].cardinality == 7
+    assert result[0].cardinality == 6
     assert result[0].frame == 'hour'
     assert result[0].tense == 'past'
 
 
 def test_float_hours_past_0_9():
     result = parse_time_references('0.9 hours ago')
-    assert len(result) == 1
-    assert result[0].cardinality == 1
-    assert result[0].frame == 'hour'
-    assert result[0].tense == 'past'
+    # 0.X truncates to 0, which is rejected as invalid cardinality
+    assert len(result) == 0
+
 
 
 def test_float_hours_past_2_4():
@@ -329,7 +328,7 @@ def test_float_hours_past_2_4():
 def test_float_hours_past_4_6():
     result = parse_time_references('4.6 hours ago')
     assert len(result) == 1
-    assert result[0].cardinality == 5
+    assert result[0].cardinality == 4
     assert result[0].frame == 'hour'
     assert result[0].tense == 'past'
 
@@ -345,7 +344,7 @@ def test_float_hours_past_18_1():
 def test_float_hours_past_23_9():
     result = parse_time_references('23.9 hours ago')
     assert len(result) == 1
-    assert result[0].cardinality == 24
+    assert result[0].cardinality == 23
     assert result[0].frame == 'hour'
     assert result[0].tense == 'past'
 
@@ -361,7 +360,7 @@ def test_float_hours_past_1_3():
 def test_float_hours_past_10_7():
     result = parse_time_references('10.7 hours ago')
     assert len(result) == 1
-    assert result[0].cardinality == 11
+    assert result[0].cardinality == 10
     assert result[0].frame == 'hour'
     assert result[0].tense == 'past'
 
@@ -389,17 +388,16 @@ def test_float_weeks_past_2_3():
 def test_float_weeks_past_3_7():
     result = parse_time_references('3.7 weeks ago')
     assert len(result) == 1
-    assert result[0].cardinality == 4
+    assert result[0].cardinality == 3
     assert result[0].frame == 'week'
     assert result[0].tense == 'past'
 
 
 def test_float_weeks_past_0_8():
     result = parse_time_references('0.8 weeks ago')
-    assert len(result) == 1
-    assert result[0].cardinality == 1
-    assert result[0].frame == 'week'
-    assert result[0].tense == 'past'
+    # 0.X truncates to 0, which is rejected as invalid cardinality
+    assert len(result) == 0
+
 
 
 def test_float_weeks_past_4_2():
@@ -421,7 +419,7 @@ def test_float_weeks_past_1_1():
 def test_float_weeks_past_2_9():
     result = parse_time_references('2.9 weeks ago')
     assert len(result) == 1
-    assert result[0].cardinality == 3
+    assert result[0].cardinality == 2
     assert result[0].frame == 'week'
     assert result[0].tense == 'past'
 
@@ -449,7 +447,7 @@ def test_float_months_past_1_4():
 def test_float_months_past_4_8():
     result = parse_time_references('4.8 months ago')
     assert len(result) == 1
-    assert result[0].cardinality == 5
+    assert result[0].cardinality == 4
     assert result[0].frame == 'month'
     assert result[0].tense == 'past'
 
@@ -457,7 +455,7 @@ def test_float_months_past_4_8():
 def test_float_months_past_2_6():
     result = parse_time_references('2.6 months ago')
     assert len(result) == 1
-    assert result[0].cardinality == 3
+    assert result[0].cardinality == 2
     assert result[0].frame == 'month'
     assert result[0].tense == 'past'
 
@@ -472,10 +470,9 @@ def test_float_months_past_3_3():
 
 def test_float_months_past_0_7():
     result = parse_time_references('0.7 months ago')
-    assert len(result) == 1
-    assert result[0].cardinality == 1
-    assert result[0].frame == 'month'
-    assert result[0].tense == 'past'
+    # 0.X truncates to 0, which is rejected as invalid cardinality
+    assert len(result) == 0
+
 
 
 def test_float_months_past_8_2():
@@ -505,7 +502,7 @@ def test_float_months_past_6_4():
 def test_float_months_past_9_8():
     result = parse_time_references('9.8 months ago')
     assert len(result) == 1
-    assert result[0].cardinality == 10
+    assert result[0].cardinality == 9
     assert result[0].frame == 'month'
     assert result[0].tense == 'past'
 
@@ -533,7 +530,7 @@ def test_float_years_past_1_4():
 def test_float_years_past_2_7():
     result = parse_time_references('2.7 years ago')
     assert len(result) == 1
-    assert result[0].cardinality == 3
+    assert result[0].cardinality == 2
     assert result[0].frame == 'year'
     assert result[0].tense == 'past'
 
@@ -541,17 +538,16 @@ def test_float_years_past_2_7():
 def test_float_years_past_3_8():
     result = parse_time_references('3.8 years ago')
     assert len(result) == 1
-    assert result[0].cardinality == 4
+    assert result[0].cardinality == 3
     assert result[0].frame == 'year'
     assert result[0].tense == 'past'
 
 
 def test_float_years_past_0_6():
     result = parse_time_references('0.6 years ago')
-    assert len(result) == 1
-    assert result[0].cardinality == 1
-    assert result[0].frame == 'year'
-    assert result[0].tense == 'past'
+    # 0.X truncates to 0, which is rejected as invalid cardinality
+    assert len(result) == 0
+
 
 
 def test_float_years_past_4_2():
@@ -572,10 +568,9 @@ def test_float_years_past_7_3():
 
 def test_float_years_past_0_9():
     result = parse_time_references('0.9 years ago')
-    assert len(result) == 1
-    assert result[0].cardinality == 1
-    assert result[0].frame == 'year'
-    assert result[0].tense == 'past'
+    # 0.X truncates to 0, which is rejected as invalid cardinality
+    assert len(result) == 0
+
 
 
 def test_float_years_past_1_1():
@@ -601,7 +596,7 @@ def test_float_seconds_past_10_3():
 def test_float_seconds_past_30_7():
     result = parse_time_references('30.7 seconds ago')
     assert len(result) == 1
-    assert result[0].cardinality == 31
+    assert result[0].cardinality == 30
     assert result[0].frame == 'second'
     assert result[0].tense == 'past'
 
@@ -625,7 +620,7 @@ def test_float_seconds_past_2_4():
 def test_float_seconds_past_5_6():
     result = parse_time_references('5.6 seconds ago')
     assert len(result) == 1
-    assert result[0].cardinality == 6
+    assert result[0].cardinality == 5
     assert result[0].frame == 'second'
     assert result[0].tense == 'past'
 
@@ -640,16 +635,15 @@ def test_float_seconds_past_15_1():
 
 def test_float_seconds_past_0_9():
     result = parse_time_references('0.9 seconds ago')
-    assert len(result) == 1
-    assert result[0].cardinality == 1
-    assert result[0].frame == 'second'
-    assert result[0].tense == 'past'
+    # 0.X truncates to 0, which is rejected as invalid cardinality
+    assert len(result) == 0
+
 
 
 def test_float_seconds_past_59_8():
     result = parse_time_references('59.8 seconds ago')
     assert len(result) == 1
-    assert result[0].cardinality == 60
+    assert result[0].cardinality == 59
     assert result[0].frame == 'second'
     assert result[0].tense == 'past'
 
@@ -669,7 +663,7 @@ def test_float_days_future_7_2():
 def test_float_days_future_3_8():
     result = parse_time_references('3.8 days from now')
     assert len(result) == 1
-    assert result[0].cardinality == 4
+    assert result[0].cardinality == 3
     assert result[0].frame == 'day'
     assert result[0].tense == 'future'
 
@@ -693,17 +687,16 @@ def test_float_days_future_1_3():
 def test_float_days_future_21_6():
     result = parse_time_references('21.6 days from now')
     assert len(result) == 1
-    assert result[0].cardinality == 22
+    assert result[0].cardinality == 21
     assert result[0].frame == 'day'
     assert result[0].tense == 'future'
 
 
 def test_float_days_future_0_9():
     result = parse_time_references('0.9 days from now')
-    assert len(result) == 1
-    assert result[0].cardinality == 1
-    assert result[0].frame == 'day'
-    assert result[0].tense == 'future'
+    # 0.X truncates to 0, which is rejected as invalid cardinality
+    assert len(result) == 0
+
 
 
 def test_float_days_future_5_4():
@@ -737,7 +730,7 @@ def test_float_days_future_30_4():
 def test_float_minutes_future_30_7():
     result = parse_time_references('30.7 minutes from now')
     assert len(result) == 1
-    assert result[0].cardinality == 31
+    assert result[0].cardinality == 30
     assert result[0].frame == 'minute'
     assert result[0].tense == 'future'
 
@@ -753,7 +746,7 @@ def test_float_minutes_future_45_2():
 def test_float_minutes_future_15_8():
     result = parse_time_references('15.8 minutes from now')
     assert len(result) == 1
-    assert result[0].cardinality == 16
+    assert result[0].cardinality == 15
     assert result[0].frame == 'minute'
     assert result[0].tense == 'future'
 
@@ -769,7 +762,7 @@ def test_float_minutes_future_90_3():
 def test_float_minutes_future_2_7():
     result = parse_time_references('2.7 minutes from now')
     assert len(result) == 1
-    assert result[0].cardinality == 3
+    assert result[0].cardinality == 2
     assert result[0].frame == 'minute'
     assert result[0].tense == 'future'
 
@@ -805,7 +798,7 @@ def test_float_minutes_future_10_3():
 def test_float_hours_future_3_7():
     result = parse_time_references('3.7 hours from now')
     assert len(result) == 1
-    assert result[0].cardinality == 4
+    assert result[0].cardinality == 3
     assert result[0].frame == 'hour'
     assert result[0].tense == 'future'
 
@@ -829,7 +822,7 @@ def test_float_hours_future_24_4():
 def test_float_hours_future_6_8():
     result = parse_time_references('6.8 hours from now')
     assert len(result) == 1
-    assert result[0].cardinality == 7
+    assert result[0].cardinality == 6
     assert result[0].frame == 'hour'
     assert result[0].tense == 'future'
 
@@ -844,10 +837,9 @@ def test_float_hours_future_12_1():
 
 def test_float_hours_future_0_9():
     result = parse_time_references('0.9 hours from now')
-    assert len(result) == 1
-    assert result[0].cardinality == 1
-    assert result[0].frame == 'hour'
-    assert result[0].tense == 'future'
+    # 0.X truncates to 0, which is rejected as invalid cardinality
+    assert len(result) == 0
+
 
 
 def test_float_hours_future_2_3():
@@ -861,7 +853,7 @@ def test_float_hours_future_2_3():
 def test_float_hours_future_18_7():
     result = parse_time_references('18.7 hours from now')
     assert len(result) == 1
-    assert result[0].cardinality == 19
+    assert result[0].cardinality == 18
     assert result[0].frame == 'hour'
     assert result[0].tense == 'future'
 
@@ -881,7 +873,7 @@ def test_float_weeks_future_1_4():
 def test_float_weeks_future_2_8():
     result = parse_time_references('2.8 weeks from now')
     assert len(result) == 1
-    assert result[0].cardinality == 3
+    assert result[0].cardinality == 2
     assert result[0].frame == 'week'
     assert result[0].tense == 'future'
 
@@ -897,17 +889,16 @@ def test_float_weeks_future_4_2():
 def test_float_weeks_future_3_6():
     result = parse_time_references('3.6 weeks from now')
     assert len(result) == 1
-    assert result[0].cardinality == 4
+    assert result[0].cardinality == 3
     assert result[0].frame == 'week'
     assert result[0].tense == 'future'
 
 
 def test_float_weeks_future_0_7():
     result = parse_time_references('0.7 weeks from now')
-    assert len(result) == 1
-    assert result[0].cardinality == 1
-    assert result[0].frame == 'week'
-    assert result[0].tense == 'future'
+    # 0.X truncates to 0, which is rejected as invalid cardinality
+    assert len(result) == 0
+
 
 
 # =============================================================================
@@ -925,7 +916,7 @@ def test_float_months_future_1_4():
 def test_float_months_future_4_8():
     result = parse_time_references('4.8 months from now')
     assert len(result) == 1
-    assert result[0].cardinality == 5
+    assert result[0].cardinality == 4
     assert result[0].frame == 'month'
     assert result[0].tense == 'future'
 
@@ -933,7 +924,7 @@ def test_float_months_future_4_8():
 def test_float_months_future_2_6():
     result = parse_time_references('2.6 months from now')
     assert len(result) == 1
-    assert result[0].cardinality == 3
+    assert result[0].cardinality == 2
     assert result[0].frame == 'month'
     assert result[0].tense == 'future'
 
@@ -949,7 +940,7 @@ def test_float_months_future_3_3():
 def test_float_months_future_11_8():
     result = parse_time_references('11.8 months from now')
     assert len(result) == 1
-    assert result[0].cardinality == 12
+    assert result[0].cardinality == 11
     assert result[0].frame == 'month'
     assert result[0].tense == 'future'
 
@@ -969,7 +960,7 @@ def test_float_years_future_1_4():
 def test_float_years_future_2_7():
     result = parse_time_references('2.7 years from now')
     assert len(result) == 1
-    assert result[0].cardinality == 3
+    assert result[0].cardinality == 2
     assert result[0].frame == 'year'
     assert result[0].tense == 'future'
 
@@ -977,17 +968,16 @@ def test_float_years_future_2_7():
 def test_float_years_future_3_8():
     result = parse_time_references('3.8 years from now')
     assert len(result) == 1
-    assert result[0].cardinality == 4
+    assert result[0].cardinality == 3
     assert result[0].frame == 'year'
     assert result[0].tense == 'future'
 
 
 def test_float_years_future_0_6():
     result = parse_time_references('0.6 years from now')
-    assert len(result) == 1
-    assert result[0].cardinality == 1
-    assert result[0].frame == 'year'
-    assert result[0].tense == 'future'
+    # 0.X truncates to 0, which is rejected as invalid cardinality
+    assert len(result) == 0
+
 
 
 def test_float_years_future_5_2():
@@ -1013,7 +1003,7 @@ def test_float_seconds_future_10_3():
 def test_float_seconds_future_30_7():
     result = parse_time_references('30.7 seconds from now')
     assert len(result) == 1
-    assert result[0].cardinality == 31
+    assert result[0].cardinality == 30
     assert result[0].frame == 'second'
     assert result[0].tense == 'future'
 
@@ -1037,7 +1027,7 @@ def test_float_seconds_future_2_4():
 def test_float_seconds_future_59_8():
     result = parse_time_references('59.8 seconds from now')
     assert len(result) == 1
-    assert result[0].cardinality == 60
+    assert result[0].cardinality == 59
     assert result[0].frame == 'second'
     assert result[0].tense == 'future'
 
@@ -1132,79 +1122,78 @@ def test_rounding_down_11_2():
 def test_rounding_up_2_6():
     result = parse_time_references('2.6 days ago')
     assert len(result) == 1
-    assert result[0].cardinality == 3
+    assert result[0].cardinality == 2
 
 
 def test_rounding_up_5_8():
     result = parse_time_references('5.8 minutes ago')
     assert len(result) == 1
-    assert result[0].cardinality == 6
+    assert result[0].cardinality == 5
 
 
 def test_rounding_up_10_9():
     result = parse_time_references('10.9 hours ago')
     assert len(result) == 1
-    assert result[0].cardinality == 11
+    assert result[0].cardinality == 10
 
 
 def test_rounding_up_3_6():
     result = parse_time_references('3.6 weeks ago')
     assert len(result) == 1
-    assert result[0].cardinality == 4
+    assert result[0].cardinality == 3
 
 
 def test_rounding_up_1_7():
     result = parse_time_references('1.7 months ago')
     assert len(result) == 1
-    assert result[0].cardinality == 2
+    assert result[0].cardinality == 1
 
 
 def test_rounding_up_4_8():
     result = parse_time_references('4.8 months ago')
     assert len(result) == 1
-    assert result[0].cardinality == 5
+    assert result[0].cardinality == 4
 
 
 def test_rounding_up_8_9():
     result = parse_time_references('8.9 hours ago')
     assert len(result) == 1
-    assert result[0].cardinality == 9
+    assert result[0].cardinality == 8
 
 
 def test_rounding_up_22_6():
     result = parse_time_references('22.6 hours ago')
     assert len(result) == 1
-    assert result[0].cardinality == 23
+    assert result[0].cardinality == 22
 
 
 def test_rounding_up_3_8():
     result = parse_time_references('3.8 weeks ago')
     assert len(result) == 1
-    assert result[0].cardinality == 4
+    assert result[0].cardinality == 3
 
 
 def test_rounding_up_11_9():
     result = parse_time_references('11.9 months ago')
     assert len(result) == 1
-    assert result[0].cardinality == 12
+    assert result[0].cardinality == 11
 
 
 def test_rounding_up_6_7():
     result = parse_time_references('6.7 days ago')
     assert len(result) == 1
-    assert result[0].cardinality == 7
+    assert result[0].cardinality == 6
 
 
 def test_rounding_up_0_7_years():
     result = parse_time_references('0.7 years ago')
-    assert len(result) == 1
-    assert result[0].cardinality == 1
-
+    # 0.X truncates to 0, which is rejected as invalid cardinality
+    assert len(result) == 0
 
 def test_rounding_up_14_8():
     result = parse_time_references('14.8 days ago')
     assert len(result) == 1
-    assert result[0].cardinality == 15
+    assert result[0].cardinality == 14
 
 
 # =============================================================================
@@ -1246,7 +1235,7 @@ def test_multi_decimal_3_456_weeks():
 def test_multi_decimal_2_789_months():
     result = parse_time_references('2.789 months ago')
     assert len(result) == 1
-    assert result[0].cardinality == 3
+    assert result[0].cardinality == 2
     assert result[0].frame == 'month'
     assert result[0].tense == 'past'
 
@@ -1270,7 +1259,7 @@ def test_multi_decimal_1_234567_years():
 def test_multi_decimal_100_567_days():
     result = parse_time_references('100.567 days ago')
     assert len(result) == 1
-    assert result[0].cardinality == 101
+    assert result[0].cardinality == 100
     assert result[0].frame == 'day'
     assert result[0].tense == 'past'
 
@@ -1278,17 +1267,16 @@ def test_multi_decimal_100_567_days():
 def test_multi_decimal_4_999_hours():
     result = parse_time_references('4.999 hours ago')
     assert len(result) == 1
-    assert result[0].cardinality == 5
+    assert result[0].cardinality == 4
     assert result[0].frame == 'hour'
     assert result[0].tense == 'past'
 
 
 def test_multi_decimal_0_999_days():
     result = parse_time_references('0.999 days ago')
-    assert len(result) == 1
-    assert result[0].cardinality == 1
-    assert result[0].frame == 'day'
-    assert result[0].tense == 'past'
+    # 0.X truncates to 0, which is rejected as invalid cardinality
+    assert len(result) == 0
+
 
 
 # =============================================================================
@@ -1350,7 +1338,7 @@ def test_extract_past_7_2_days():
 def test_extract_past_4_8_months():
     result = extract_past_references('4.8 months ago')
     assert len(result) == 1
-    assert result[0].cardinality == 5
+    assert result[0].cardinality == 4  # truncated from 4.8
     assert result[0].tense == 'past'
 
 
@@ -1376,7 +1364,7 @@ def test_extract_future_7_2_days():
 def test_extract_future_3_8_weeks():
     result = extract_future_references('3.8 weeks from now')
     assert len(result) == 1
-    assert result[0].cardinality == 4
+    assert result[0].cardinality == 3  # truncated from 3.8
     assert result[0].tense == 'future'
 
 
@@ -1411,8 +1399,9 @@ def test_resolve_to_timedelta_rounded_value():
 
 
 def test_resolve_to_timedelta_rounded_up():
+    """Test timedelta with truncated cardinality (not rounded)."""
     deltas = resolve_to_timedelta('7.8 days ago')
-    assert deltas[0] == timedelta(days=-8)
+    assert deltas[0] == timedelta(days=-7)  # truncated from 7.8
 
 
 def test_parse_dates_float_cardinality():
@@ -1450,7 +1439,7 @@ def test_sentence_float_hours_ago():
 def test_sentence_float_months_ago():
     result = parse_time_references('account created 4.8 months ago')
     assert len(result) == 1
-    assert result[0].cardinality == 5
+    assert result[0].cardinality == 4  # truncated from 4.8
     assert result[0].frame == 'month'
 
 
@@ -1464,7 +1453,7 @@ def test_sentence_float_years_ago():
 def test_sentence_float_from_now():
     result = parse_time_references('deadline is 3.8 weeks from now')
     assert len(result) == 1
-    assert result[0].cardinality == 4
+    assert result[0].cardinality == 3  # truncated from 3.8
     assert result[0].frame == 'week'
     assert result[0].tense == 'future'
 
@@ -1486,7 +1475,7 @@ def test_sentence_float_weeks_ago():
 def test_sentence_float_seconds_ago():
     result = parse_time_references('ping received 30.7 seconds ago')
     assert len(result) == 1
-    assert result[0].cardinality == 31
+    assert result[0].cardinality == 30  # truncated from 30.7
     assert result[0].frame == 'second'
 
 
@@ -1513,7 +1502,7 @@ def test_float_abbrev_mins_past():
 def test_float_abbrev_secs_past():
     result = parse_time_references('30.7 secs ago')
     assert len(result) == 1
-    assert result[0].cardinality == 31
+    assert result[0].cardinality == 30
     assert result[0].frame == 'second'
     assert result[0].tense == 'past'
 
@@ -1537,7 +1526,7 @@ def test_float_abbrev_yrs_past():
 def test_float_abbrev_mos_past():
     result = parse_time_references('4.8 mos ago')
     assert len(result) == 1
-    assert result[0].cardinality == 5
+    assert result[0].cardinality == 4
     assert result[0].frame == 'month'
     assert result[0].tense == 'past'
 
@@ -1561,7 +1550,7 @@ def test_float_abbrev_mins_future():
 def test_float_abbrev_wks_future():
     result = parse_time_references('3.6 wks from now')
     assert len(result) == 1
-    assert result[0].cardinality == 4
+    assert result[0].cardinality == 3
     assert result[0].frame == 'week'
     assert result[0].tense == 'future'
 
@@ -1569,7 +1558,7 @@ def test_float_abbrev_wks_future():
 def test_float_abbrev_yrs_future():
     result = parse_time_references('2.7 yrs from now')
     assert len(result) == 1
-    assert result[0].cardinality == 3
+    assert result[0].cardinality == 2
     assert result[0].frame == 'year'
     assert result[0].tense == 'future'
 
@@ -1631,8 +1620,9 @@ def test_timedelta_float_minutes_past_value():
 
 
 def test_timedelta_float_hours_rounded_up():
+    """Test timedelta with truncated cardinality (not rounded)."""
     deltas = resolve_to_timedelta('3.7 hours ago')
-    assert deltas[0] == timedelta(hours=-4)
+    assert deltas[0] == timedelta(hours=-3)  # truncated from 3.7
 
 
 # =============================================================================
@@ -1740,7 +1730,7 @@ def test_capitalized_float_hours_ago():
 def test_capitalized_float_months_ago():
     result = parse_time_references('4.8 Months Ago')
     assert len(result) == 1
-    assert result[0].cardinality == 5
+    assert result[0].cardinality == 4  # truncated from 4.8
     assert result[0].frame == 'month'
     assert result[0].tense == 'past'
 
@@ -1748,7 +1738,7 @@ def test_capitalized_float_months_ago():
 def test_capitalized_float_weeks_from_now():
     result = parse_time_references('3.7 Weeks From Now')
     assert len(result) == 1
-    assert result[0].cardinality == 4
+    assert result[0].cardinality == 3  # truncated from 3.7
     assert result[0].frame == 'week'
     assert result[0].tense == 'future'
 
@@ -1776,7 +1766,7 @@ def test_uppercase_float_days_ago():
 def test_float_secs_plural_past():
     result = parse_time_references('30.7 secs ago')
     assert len(result) == 1
-    assert result[0].cardinality == 31
+    assert result[0].cardinality == 30
     assert result[0].frame == 'second'
     assert result[0].tense == 'past'
 
@@ -1792,7 +1782,7 @@ def test_float_yrs_plural_past():
 def test_float_mos_plural_past():
     result = parse_time_references('4.8 mos ago')
     assert len(result) == 1
-    assert result[0].cardinality == 5
+    assert result[0].cardinality == 4
     assert result[0].frame == 'month'
     assert result[0].tense == 'past'
 
@@ -1808,7 +1798,7 @@ def test_float_wks_plural_past():
 def test_float_hr_singular_future():
     result = parse_time_references('3.7 hr from now')
     assert len(result) == 1
-    assert result[0].cardinality == 4
+    assert result[0].cardinality == 3
     assert result[0].frame == 'hour'
     assert result[0].tense == 'future'
 
@@ -1824,7 +1814,7 @@ def test_float_secs_plural_future():
 def test_float_yrs_plural_future():
     result = parse_time_references('2.7 yrs from now')
     assert len(result) == 1
-    assert result[0].cardinality == 3
+    assert result[0].cardinality == 2
     assert result[0].frame == 'year'
     assert result[0].tense == 'future'
 
@@ -1844,7 +1834,7 @@ def test_float_days_past_50_3():
 def test_float_hours_past_48_7():
     result = parse_time_references('48.7 hours ago')
     assert len(result) == 1
-    assert result[0].cardinality == 49
+    assert result[0].cardinality == 48
     assert result[0].frame == 'hour'
     assert result[0].tense == 'past'
 
@@ -1868,7 +1858,7 @@ def test_float_weeks_past_6_3():
 def test_float_months_past_7_7():
     result = parse_time_references('7.7 months ago')
     assert len(result) == 1
-    assert result[0].cardinality == 8
+    assert result[0].cardinality == 7
     assert result[0].frame == 'month'
     assert result[0].tense == 'past'
 
@@ -1892,7 +1882,7 @@ def test_float_seconds_past_90_3():
 def test_float_days_past_200_8():
     result = parse_time_references('200.8 days ago')
     assert len(result) == 1
-    assert result[0].cardinality == 201
+    assert result[0].cardinality == 200
     assert result[0].frame == 'day'
     assert result[0].tense == 'past'
 
@@ -1915,16 +1905,15 @@ def test_float_minutes_future_1_4():
 
 def test_float_seconds_future_0_9():
     result = parse_time_references('0.9 seconds from now')
-    assert len(result) == 1
-    assert result[0].cardinality == 1
-    assert result[0].frame == 'second'
-    assert result[0].tense == 'future'
+    # 0.X truncates to 0, which is rejected as invalid cardinality
+    assert len(result) == 0
+
 
 
 def test_float_months_future_6_8():
     result = parse_time_references('6.8 months from now')
     assert len(result) == 1
-    assert result[0].cardinality == 7
+    assert result[0].cardinality == 6
     assert result[0].frame == 'month'
     assert result[0].tense == 'future'
 
@@ -1940,7 +1929,7 @@ def test_float_years_future_10_3():
 def test_float_weeks_future_8_7():
     result = parse_time_references('8.7 weeks from now')
     assert len(result) == 1
-    assert result[0].cardinality == 9
+    assert result[0].cardinality == 8
     assert result[0].frame == 'week'
     assert result[0].tense == 'future'
 
@@ -1984,7 +1973,7 @@ def test_has_temporal_info_no_float_match():
 def test_float_days_past_4_6():
     result = parse_time_references('4.6 days ago')
     assert len(result) == 1
-    assert result[0].cardinality == 5
+    assert result[0].cardinality == 4
     assert result[0].frame == 'day'
     assert result[0].tense == 'past'
 
@@ -1992,6 +1981,6 @@ def test_float_days_past_4_6():
 def test_float_hours_past_16_8():
     result = parse_time_references('16.8 hours ago')
     assert len(result) == 1
-    assert result[0].cardinality == 17
+    assert result[0].cardinality == 16
     assert result[0].frame == 'hour'
     assert result[0].tense == 'past'

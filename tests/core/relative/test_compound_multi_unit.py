@@ -919,14 +919,16 @@ def test_compound_tense_is_string():
 # =============================================================================
 
 def test_float_in_compound_year_rounded():
+    """Float cardinalities are truncated, not rounded (issue #59)."""
     result = parse_time_references('1.5 years 2 months ago')
     year_units = [r for r in result if r.frame == 'year']
-    assert year_units[0].cardinality == 2
+    assert year_units[0].cardinality == 1  # truncated from 1.5
 
 def test_float_in_compound_month_rounded():
+    """Float cardinalities are truncated, not rounded (issue #59)."""
     result = parse_time_references('1 year 2.7 months ago')
     month_units = [r for r in result if r.frame == 'month']
-    assert month_units[0].cardinality == 3
+    assert month_units[0].cardinality == 2  # truncated from 2.7
 
 def test_float_in_compound_both_float():
     result = parse_time_references('1.2 years 2.8 months ago')

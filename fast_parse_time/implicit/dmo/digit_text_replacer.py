@@ -170,24 +170,25 @@ class DigitTextReplacer(object):
         return text.split()
 
     def _round_float_tokens(self, tokens: list) -> list:
-        """Round float tokens to the nearest integer string.
+        """Truncate float tokens to integer strings.
 
         Converts decimal numeric strings (e.g. '7.2', '22.355') to their
-        rounded integer equivalent ('7', '22') so the KB can match them.
+        truncated integer equivalent ('7', '22') so the KB can match them.
         Integer tokens and non-numeric tokens are passed through unchanged.
 
-        Rounding uses Python's built-in round() (banker's rounding):
-            7.2 → '7',  7.8 → '8',  4.8 → '5',  22.355 → '22'
+        Truncation uses int(float()) which discards the fractional part:
+            1.5 → '1',  2.9 → '2',  10.75 → '10',  0.5 → '0'
 
-        Related GitHub Issue:
+        Related GitHub Issues:
             #15 - Gap: float/decimal cardinalities not supported
-            https://github.com/craigtrim/fast-parse-time/issues/15
+            #59 - Support decimal/float cardinalities in relative time expressions
+            https://github.com/craigtrim/fast-parse-time/issues/59
         """
         result = []
         for token in tokens:
             if '.' in token:
                 try:
-                    result.append(str(round(float(token))))
+                    result.append(str(int(float(token))))
                 except ValueError:
                     result.append(token)
             else:
