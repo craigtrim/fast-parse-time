@@ -234,10 +234,23 @@ class ExplicitTimeExtractor(object):
 
         # "YYYY-YY" abbreviated second year — e.g., "2025-26", "1999-00"
         # Uses century-rollover: 1999-00 → 1900+0=1900 ≤ 1999 → add 100 → 2000
+        #
+        # Guard: if the 2-digit component is a valid calendar month (01–12) the
+        # token is a YYYY-MM partial ISO 8601 date, NOT a year range.  We skip it
+        # here so the ISO 8601 extractor can classify it correctly.
+        #
+        # Related GitHub Issue:
+        #     #52 - Bug: YYYY-MM falsely matched as YEAR_RANGE for years <= 2000
+        #     https://github.com/craigtrim/fast-parse-time/issues/52
         pattern_abbrev = r'\b(\d{4})-(\d{2})\b'
         for match in re.finditer(pattern_abbrev, input_text):
             y1_full = int(match.group(1))
             y2_abbrev = int(match.group(2))
+
+            # Skip valid month values (01–12): those are YYYY-MM, not YYYY-YY
+            if 1 <= y2_abbrev <= 12:
+                continue
+
             century = (y1_full // 100) * 100
             y2_full = century + y2_abbrev
             if y2_full <= y1_full:
