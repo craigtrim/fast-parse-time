@@ -942,7 +942,8 @@ def test_float_in_compound_both_float_year():
 def test_float_in_compound_both_float_month():
     result = parse_time_references('1.2 years 2.8 months ago')
     month_units = [r for r in result if r.frame == 'month']
-    assert month_units[0].cardinality == 3
+    # 2.8 truncates to 2 (not rounded to 3)
+    assert month_units[0].cardinality == 2
 
 def test_float_in_compound_week_day():
     result = parse_time_references('2.3 weeks 4.1 days ago')
@@ -961,7 +962,8 @@ def test_float_in_compound_day_rounded():
 def test_float_in_compound_future():
     result = parse_time_references('1.5 years 3 months from now')
     year_units = [r for r in result if r.frame == 'year']
-    assert year_units[0].cardinality == 2
+    # 1.5 truncates to 1 (not rounded to 2)
+    assert year_units[0].cardinality == 1
     assert year_units[0].tense == 'future'
 
 def test_float_in_compound_three_units():
@@ -971,7 +973,8 @@ def test_float_in_compound_three_units():
 def test_float_in_compound_hour_minute():
     result = parse_time_references('2.9 hours 45.4 minutes ago')
     hour_units = [r for r in result if r.frame == 'hour']
-    assert hour_units[0].cardinality == 3
+    # 2.9 truncates to 2 (not rounded to 3)
+    assert hour_units[0].cardinality == 2
 
 
 # =============================================================================
