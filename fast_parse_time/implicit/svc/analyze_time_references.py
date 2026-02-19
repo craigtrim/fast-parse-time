@@ -57,17 +57,18 @@ _COMPACT_UNIT_MAP = {
 }
 
 # Regex pattern to detect compact tokens: number + unit letter(s)
-# Examples: 1d, 2w, 3mo, 5h, 10min, 30s
+# Examples: 1d, 2w, 3mo, 5h, 10min, 30s, 2.5h, 1.5d
 # Pattern breakdown:
 #   \b         - word boundary
-#   (\d+)      - one or more digits (cardinality)
+#   (\d+(?:\.\d+)?) - one or more digits, optionally followed by decimal point and digits
 #   (mo|min|d|w|m|y|h|s) - unit letter(s), ordered by length (mo and min before m and s)
 #   \b         - word boundary
-# Related GitHub Issue:
+# Related GitHub Issues:
 #     #57 - Support compact number+letter unit tokens (1d, 2y) in relative time parsing
-#     https://github.com/craigtrim/fast-parse-time/issues/57
+#     #59 - Support decimal/float cardinalities in relative time expressions
+#     https://github.com/craigtrim/fast-parse-time/issues/59
 _COMPACT_TOKEN_PATTERN = re.compile(
-    r'\b(\d+)(mo|min|d|w|m|y|h|s)\b',
+    r'\b(\d+(?:\.\d+)?)(mo|min|d|w|m|y|h|s)\b',
     re.IGNORECASE
 )
 
@@ -140,8 +141,8 @@ class AnalyzeTimeReferences(object):
             unit_letter = match.group(2).lower()
             match_end = match.end()
 
-            # Reject zero cardinality
-            cardinality = int(cardinality_str)
+            # Reject zero cardinality (truncate decimal to int first)
+            cardinality = int(float(cardinality_str))
             if cardinality == 0:
                 return match.group(0)  # return original token unchanged
 
