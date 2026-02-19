@@ -3,6 +3,7 @@
 """ Analyze Time References in Text """
 
 
+import re
 from typing import Optional
 from baseblock import ServiceEventGenerator
 
@@ -37,6 +38,36 @@ _PAST_MARKERS = {'ago', 'back'}
 # Future tense terminal suffix tokens (requires preceding 'from')
 _FUTURE_TERMINALS = {'now', 'today'}
 
+# Compact token letter-to-frame mapping
+# Related GitHub Issue:
+#     #57 - Support compact number+letter unit tokens (1d, 2y) in relative time parsing
+#     https://github.com/craigtrim/fast-parse-time/issues/57
+_COMPACT_UNIT_MAP = {
+    'd': 'day',
+    'w': 'week',
+    'mo': 'month',
+    'm': 'month',
+    'y': 'year',
+    'h': 'hour',
+    'min': 'minute',
+    's': 'second',
+}
+
+# Regex pattern to detect compact tokens: number + unit letter(s)
+# Examples: 1d, 2w, 3mo, 5h, 10min, 30s
+# Pattern breakdown:
+#   \b         - word boundary
+#   (\d+)      - one or more digits (cardinality)
+#   (mo|min|d|w|m|y|h|s) - unit letter(s), ordered by length (mo and min before m and s)
+#   \b         - word boundary
+# Related GitHub Issue:
+#     #57 - Support compact number+letter unit tokens (1d, 2y) in relative time parsing
+#     https://github.com/craigtrim/fast-parse-time/issues/57
+_COMPACT_TOKEN_PATTERN = re.compile(
+    r'\b(\d+)(mo|min|d|w|m|y|h|s)\b',
+    re.IGNORECASE
+)
+
 
 class AnalyzeTimeReferences(object):
     """ Analyze Time References in Text """
@@ -67,6 +98,70 @@ class AnalyzeTimeReferences(object):
         return token.isdigit() or (
             '.' in token and token.replace('.', '', 1).isdigit()
         )
+
+    @staticmethod
+    def _expand_compact_tokens(input_text: str) -> str:
+        """Expand compact number+unit tokens into separate number and unit tokens.
+
+        Recognizes and expands patterns like:
+            '1d ago'     → '1 day ago'
+            '2w'         → '2 week ago'  (implicit past - 'ago' added)
+            '3mo ago'    → '3 month ago'
+            'posted 5h'  → 'posted 5 hour ago'  (implicit past)
+
+        If no tense marker (ago, back, from now, etc.) follows the compact token,
+        'ago' is automatically appended to create an implicit past-tense reference.
+
+        Zero cardinality (0d, 0w, etc.) is NOT expanded (invalid time reference).
+
+        Args:
+            input_text (str): input text that may contain compact tokens
+
+        Returns:
+            str: text with compact tokens expanded and implicit 'ago' added where needed
+
+        Related GitHub Issue:
+            #57 - Support compact number+letter unit tokens (1d, 2y) in relative time parsing
+            https://github.com/craigtrim/fast-parse-time/issues/57
+        """
+        # Pattern to detect if a tense marker follows the compact token
+        # Looks for: compact token + optional whitespace + tense marker
+        tense_markers_pattern = r'\b(ago|back)\b'
+
+        def replace_compact_token(match):
+            """Replace a compact token with expanded form."""
+            cardinality_str = match.group(1)
+            unit_letter = match.group(2).lower()
+            match_end = match.end()
+
+            # Reject zero cardinality
+            cardinality = int(cardinality_str)
+            if cardinality == 0:
+                return match.group(0)  # return original token unchanged
+
+            # Map unit letter to full unit name (singular form)
+            unit_name = _COMPACT_UNIT_MAP.get(unit_letter)
+            if not unit_name:
+                return match.group(0)  # return original if no mapping found
+
+            # Pluralize unit name if cardinality > 1
+            # Standard pluralization: add 's' to the singular form
+            if cardinality > 1:
+                unit_name = unit_name + 's'
+
+            # Check if a tense marker follows the compact token
+            remaining_text = input_text[match_end:]
+            has_tense_marker = re.match(r'^\s+(' + tense_markers_pattern + ')', remaining_text)
+
+            # If no tense marker follows, add 'ago' for implicit past
+            if has_tense_marker:
+                # Tense marker present, just expand the token
+                return f'{cardinality_str} {unit_name}'
+            else:
+                # No tense marker, add 'ago' for implicit past
+                return f'{cardinality_str} {unit_name} ago'
+
+        return _COMPACT_TOKEN_PATTERN.sub(replace_compact_token, input_text)
 
     def _extract_compound_sub_tokens(self, tokens: list) -> Optional[list]:
         """Detect and expand a compound multi-unit token list.
@@ -149,6 +244,12 @@ class AnalyzeTimeReferences(object):
 
     def _process(self,
                  input_text: str) -> dict:
+
+        # Expand compact tokens (1d → 1 day, 2y → 2 year, etc.) before tokenization
+        # Related GitHub Issue:
+        #     #57 - Support compact number+letter unit tokens (1d, 2y) in relative time parsing
+        #     https://github.com/craigtrim/fast-parse-time/issues/57
+        input_text = self._expand_compact_tokens(input_text)
 
         tokens = input_text.lower().strip().split()
 
