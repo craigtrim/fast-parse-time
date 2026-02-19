@@ -1,0 +1,3 @@
+# Informal Expression Tests
+
+These tests verify parsing of natural-language time expressions that use fuzzy quantifiers and conversational phrasing, such as "a few days ago", "several weeks back", "half an hour ago", and "a couple of months". Support for these forms was introduced across [Issue #3](https://github.com/craigtrim/fast-parse-time/issues/3), [Issue #4](https://github.com/craigtrim/fast-parse-time/issues/4), [Issue #5](https://github.com/craigtrim/fast-parse-time/issues/5), and [Issue #18](https://github.com/craigtrim/fast-parse-time/issues/18). Tests cover indefinite articles, word-number conversion, quantifier phrases, and sentence context.

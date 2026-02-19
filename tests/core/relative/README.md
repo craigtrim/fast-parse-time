@@ -1,0 +1,3 @@
+# Relative Time Tests
+
+These tests verify the core relative time extraction behavior: past and future references across all supported time frames, compound multi-unit expressions, float cardinalities, zero cardinality, plural and singular unit forms, and tense handling. Several capabilities here were introduced to close gaps identified in [Issue #9](https://github.com/craigtrim/fast-parse-time/issues/9), [Issue #13](https://github.com/craigtrim/fast-parse-time/issues/13), [Issue #15](https://github.com/craigtrim/fast-parse-time/issues/15), and [Issue #20](https://github.com/craigtrim/fast-parse-time/issues/20).
