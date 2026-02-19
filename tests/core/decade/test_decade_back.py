@@ -1,0 +1,92 @@
+# -*- coding: utf-8 -*-
+"""
+Test decade as a time unit.
+
+Related GitHub Issue:
+    #19 - Gap: decade as a time unit not recognized
+    https://github.com/craigtrim/fast-parse-time/issues/19
+
+Decade normalizes to years with a multiplier of 10:
+    1 decade  = 10 years
+    2 decades = 20 years
+    3 decades = 30 years
+    N decades = N * 10 years
+
+Frame is always 'year'. Cardinality is N * 10.
+"""
+
+from fast_parse_time import parse_time_references, has_temporal_info
+
+
+class TestDecadeBack:
+    """N decades back -> past, year, N*10"""
+
+    def test_1_decade_back(self):
+        result = parse_time_references('1 decade back')
+        assert len(result) == 1
+        assert result[0].cardinality == 10
+        assert result[0].frame == 'year'
+        assert result[0].tense == 'past'
+
+    def test_2_decades_back(self):
+        result = parse_time_references('2 decades back')
+        assert len(result) == 1
+        assert result[0].cardinality == 20
+        assert result[0].frame == 'year'
+        assert result[0].tense == 'past'
+
+    def test_3_decades_back(self):
+        result = parse_time_references('3 decades back')
+        assert len(result) == 1
+        assert result[0].cardinality == 30
+        assert result[0].frame == 'year'
+        assert result[0].tense == 'past'
+
+    def test_4_decades_back(self):
+        result = parse_time_references('4 decades back')
+        assert len(result) == 1
+        assert result[0].cardinality == 40
+        assert result[0].frame == 'year'
+        assert result[0].tense == 'past'
+
+    def test_5_decades_back(self):
+        result = parse_time_references('5 decades back')
+        assert len(result) == 1
+        assert result[0].cardinality == 50
+        assert result[0].frame == 'year'
+        assert result[0].tense == 'past'
+
+    def test_6_decades_back(self):
+        result = parse_time_references('6 decades back')
+        assert len(result) == 1
+        assert result[0].cardinality == 60
+        assert result[0].frame == 'year'
+        assert result[0].tense == 'past'
+
+    def test_7_decades_back(self):
+        result = parse_time_references('7 decades back')
+        assert len(result) == 1
+        assert result[0].cardinality == 70
+        assert result[0].frame == 'year'
+        assert result[0].tense == 'past'
+
+    def test_8_decades_back(self):
+        result = parse_time_references('8 decades back')
+        assert len(result) == 1
+        assert result[0].cardinality == 80
+        assert result[0].frame == 'year'
+        assert result[0].tense == 'past'
+
+    def test_9_decades_back(self):
+        result = parse_time_references('9 decades back')
+        assert len(result) == 1
+        assert result[0].cardinality == 90
+        assert result[0].frame == 'year'
+        assert result[0].tense == 'past'
+
+    def test_10_decades_back(self):
+        result = parse_time_references('10 decades back')
+        assert len(result) == 1
+        assert result[0].cardinality == 100
+        assert result[0].frame == 'year'
+        assert result[0].tense == 'past'
