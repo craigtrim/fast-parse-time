@@ -69,7 +69,6 @@ class TestIso8601ZSuffix:
         result = extract_explicit_dates('2017-02-03T09:04:08Z')
         assert result
 
-    @pytest.mark.xfail(reason='YYYY-MM falsely matched as YEAR_RANGE for years <= 2000; see https://github.com/craigtrim/fast-parse-time/issues/52')
     def test_z_suffix_2000(self):
         result = extract_explicit_dates('2000-01-01T00:00:00Z')
         assert result == {'2000-01-01': 'FULL_EXPLICIT_DATE'}
