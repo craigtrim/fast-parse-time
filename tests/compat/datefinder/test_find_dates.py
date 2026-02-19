@@ -106,11 +106,13 @@ class TestDateRanges:
         assert len(result) == 2
 
     def test_iso_date_range(self):
-        """'2017-02-03T09:04:08Z to 2017-02-03T09:04:09Z'"""
+        """'2017-02-03T09:04:08Z to 2017-02-03T09:04:09Z' - same day returns 1 entry"""
         result = extract_explicit_dates(
             '2017-02-03T09:04:08Z to 2017-02-03T09:04:09Z'
         )
-        assert len(result) == 2
+        # Both datetimes map to same date key, so only 1 entry
+        assert len(result) == 1
+        assert '2017-02-03' in result
 
 
 class TestNumericDates:
