@@ -69,7 +69,7 @@ The `DateType` enum defines all possible classifications for extracted dates. Th
 | `DAY_MONTH_AMBIGUOUS` | `4/8` | Could be April 8 or August 4 |
 | `MONTH_YEAR` | `12/2024` | Month and year, no day |
 | `YEAR_MONTH` | `2024-03` | ISO-style year then month |
-| `YEAR_RANGE` | `2014-2015` | Span of two years |
+| `YEAR_RANGE` | `2014-2015`, `2010 to 2020`, `2023-24` | Span of two years; accepts en/em dash, `to`, `through`, abbreviated second year |
 
 ### Defined but not yet extracted
 
@@ -115,3 +115,5 @@ For explicit numeric dates:
 | `.` | `02.14.2024` |
 
 > **Note:** Only one delimiter type is processed per extraction call. See [BOUNDARIES.md](https://github.com/craigtrim/fast-parse-time/blob/master/BOUNDARIES.md#1-single-delimiter-type-per-extraction).
+
+> **Unicode normalization:** En dash (–), em dash (—), and other Unicode hyphen variants are normalized to ASCII `-` before extraction. Space-padded hyphens (`2014 - 2015`) are also collapsed. This applies automatically; no special handling is required by callers.

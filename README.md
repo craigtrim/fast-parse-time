@@ -5,7 +5,7 @@
 [![Downloads](https://pepy.tech/badge/fast-parse-time)](https://pepy.tech/project/fast-parse-time)
 [![Downloads](https://pepy.tech/badge/fast-parse-time/month)](https://pepy.tech/project/fast-parse-time)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://img.shields.io/badge/tests-1394-brightgreen.svg)](https://github.com/craigtrim/fast-parse-time/tree/master/tests)
+[![Tests](https://img.shields.io/badge/tests-8560-brightgreen.svg)](https://github.com/craigtrim/fast-parse-time/tree/master/tests)
 
 Extract dates and times from text. Fast, deterministic, zero cost.
 
@@ -54,6 +54,16 @@ for time_ref in result.relative_times:
 "Meeting scheduled for 3/24"   → 3/24 (month/day)
 "Copyright 2024"               → 2024 (year only)
 "Ambiguous: 4/8"               → 4/8 (flagged as ambiguous)
+"Published March 15, 2024"     → March 15, 2024 (written month)
+"Filed in 2024"                → 2024 (year in prose)
+```
+
+**Year ranges:**
+```python
+"Active 2014-2015"             → 2014-2015 (year range)
+"From 2010 to 2020"           → From 2010 to 2020 (year range)
+"Revenue grew 2019–2023"      → 2019-2023 (en/em dash normalized)
+"Contract 2023-24"            → 2023-24 (abbreviated)
 ```
 
 **Relative times:**
@@ -61,6 +71,8 @@ for time_ref in result.relative_times:
 "5 days ago"                   → 5 days (past)
 "last couple of weeks"         → 2 weeks (past)
 "30 minutes ago"               → 30 minutes (past)
+"half an hour ago"             → 1 hour (past)
+"a few days ago"               → 3 days (past)
 ```
 
 ## Examples
@@ -94,9 +106,15 @@ datetimes = resolve_to_datetime("Show me data from 5 days ago")
 
 ## Features
 
-- Multiple date formats: `04/08/2024`, `3/24`, `2024-06-05`
+- Multiple date formats: `04/08/2024`, `3/24`, `2024-06-05`, `March 15, 2024`
 - Multiple delimiters: `/`, `-`, `.`
+- Year ranges: `2014-2015`, `2010 to 2020`, `from 2018 through 2022`, `2023-24`
+- Unicode normalization: en dash, em dash, and other hyphen variants accepted automatically
+- Written months: `March 15, 2024`, `Mar 15, 2024`, `15 March 2024`
+- Year-only in prose: `Copyright 2024`, `filed in 2019`
 - Relative time expressions: "5 days ago", "last week", "couple of months ago"
+- Informal expressions: "half an hour ago", "a few days ago", "several weeks ago"
+- Named day and time-of-day references: "last Monday", "this morning", "yesterday"
 - Ambiguity detection: Flags dates like `4/8` that could be April 8 or August 4
 - Time frame support: seconds, minutes, hours, days, weeks, months, years
 

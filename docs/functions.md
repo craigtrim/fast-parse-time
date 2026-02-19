@@ -55,6 +55,7 @@ extract_explicit_dates("Event on 2024-06-05")        # {'2024-06-05': 'FULL_EXPL
 # Partial numeric
 extract_explicit_dates("Event on 3/24")              # {'3/24': 'MONTH_DAY'}
 extract_explicit_dates("Copyright 2024")             # {'2024': 'YEAR_ONLY'}
+extract_explicit_dates("Filed in 2019")              # {'2019': 'YEAR_ONLY'}
 
 # Ambiguous
 extract_explicit_dates("Meeting 4/8")                # {'4/8': 'DAY_MONTH_AMBIGUOUS'}
@@ -63,6 +64,13 @@ extract_explicit_dates("Meeting 4/8")                # {'4/8': 'DAY_MONTH_AMBIGU
 extract_explicit_dates("Event on March 15, 2024")   # {'March 15, 2024': 'FULL_EXPLICIT_DATE'}
 extract_explicit_dates("Event on Mar 15, 2024")     # {'Mar 15, 2024': 'FULL_EXPLICIT_DATE'}
 extract_explicit_dates("Event on 15 March 2024")    # {'15 March 2024': 'FULL_EXPLICIT_DATE'}
+
+# Year ranges
+extract_explicit_dates("Active 2014-2015")           # {'2014-2015': 'YEAR_RANGE'}
+extract_explicit_dates("From 2010 to 2020")          # {'2010 to 2020': 'YEAR_RANGE'}
+extract_explicit_dates("From 2018 through 2022")     # {'2018 through 2022': 'YEAR_RANGE'}  # 'through' accepted
+extract_explicit_dates("Revenue grew 2019\u20132023")  # {'2019-2023': 'YEAR_RANGE'}  # en dash normalized
+extract_explicit_dates("Contract 2023-24")           # {'2023-24': 'YEAR_RANGE'}  # abbreviated year
 ```
 
 ### `extract_relative_times(text: str) -> List[RelativeTime]`
