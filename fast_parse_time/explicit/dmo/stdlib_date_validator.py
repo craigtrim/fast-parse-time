@@ -31,11 +31,16 @@ _FULL_YEAR_FORMATS = [
     # Written month forms — with comma (most common in English prose)
     '%B %d, %Y',  # March 15, 2024
     '%b %d, %Y',  # Mar 15, 2024
+    # Written month forms with period — with comma (American newspaper style)
+    '%b. %d, %Y', # Aug. 9, 2012
     # Written month forms — without comma
     '%B %d %Y',   # March 15 2024
     '%b %d %Y',   # Mar 15 2024
     '%d %B %Y',   # 15 March 2024
     '%d %b %Y',   # 15 Mar 2024
+    # Written month forms with period — without comma
+    '%b. %d %Y',  # Aug. 9 2012
+    '%d %b. %Y',  # 9 Aug. 2012
     # Month and year only
     '%B %Y',      # March 2024
     '%b %Y',      # Mar 2024
@@ -70,13 +75,21 @@ _MONTH_ALIASES = {
 
 
 def _normalize_month_aliases(text: str) -> str:
-    """Replace non-standard month abbreviations with strptime-compatible forms."""
+    """Replace non-standard month abbreviations with strptime-compatible forms.
+
+    Handles both with and without trailing period: 'sept' → 'sep', 'Sept.' → 'Sep.'
+    """
     lower = text.lower()
     for alias, canonical in _MONTH_ALIASES.items():
-        if alias in lower.split():
+        # Check for the alias with or without a trailing period
+        if alias in lower.split() or (alias + '.') in lower.split():
+            # Determine if we need to add a period back
+            has_period = (alias + '.') in lower.split()
             # Preserve original capitalisation style (title-case if first char is upper)
             replacement = canonical.title() if text[text.lower().index(alias)].isupper() else canonical
-            text = text[:text.lower().index(alias)] + replacement + text[text.lower().index(alias) + len(alias):]
+            if has_period:
+                replacement += '.'
+            text = text[:text.lower().index(alias)] + replacement + text[text.lower().index(alias) + len(alias + ('.' if has_period else '')):]
             break
     return text
 

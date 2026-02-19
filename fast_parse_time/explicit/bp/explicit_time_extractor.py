@@ -97,10 +97,12 @@ class ExplicitTimeExtractor(object):
         month_pattern = '|'.join(sorted(MONTH_NAMES, key=len, reverse=True))
 
         # Pattern for: Month Day, Year (e.g., March 15, 2024 or Mar 15th, 2024)
-        pattern1 = rf'(?i)({month_pattern})\s+\d{{1,2}}(?:st|nd|rd|th)?,?\s+\d{{4}}'
+        # Includes optional period after month abbreviation (Aug., Dec., etc.)
+        pattern1 = rf'(?i)({month_pattern})\.?\s+\d{{1,2}}(?:st|nd|rd|th)?,?\s+\d{{4}}'
 
         # Pattern for: Day Month Year (e.g., 15 March 2024 or 15th March 2024)
-        pattern2 = rf'(?i)\d{{1,2}}(?:st|nd|rd|th)?\s+({month_pattern})\s+\d{{4}}'
+        # Includes optional period after month abbreviation (Aug., Dec., etc.)
+        pattern2 = rf'(?i)\d{{1,2}}(?:st|nd|rd|th)?\s+({month_pattern})\.?\s+\d{{4}}'
 
         matches = []
         for pattern in [pattern1, pattern2]:
@@ -138,9 +140,11 @@ class ExplicitTimeExtractor(object):
         month_pattern = '|'.join(sorted(MONTH_NAMES, key=len, reverse=True))
 
         # Forward: MonthName-Year  →  MONTH_YEAR
-        pattern_forward = rf'(?i)\b({month_pattern})-(\d{{4}}|\d{{2}})\b'
+        # Includes optional period after month abbreviation (Aug., Dec., etc.)
+        pattern_forward = rf'(?i)\b({month_pattern})\.?-(\d{{4}}|\d{{2}})\b'
         # Reversed: Year-MonthName  →  YEAR_MONTH
-        pattern_reversed = rf'(?i)\b(\d{{4}}|\d{{2}})-({month_pattern})\b'
+        # Includes optional period after month abbreviation (Aug., Dec., etc.)
+        pattern_reversed = rf'(?i)\b(\d{{4}}|\d{{2}})-({month_pattern})\.?\b'
 
         def _valid_year(raw: str) -> bool:
             n = int(raw)
@@ -383,7 +387,7 @@ class ExplicitTimeExtractor(object):
         # ── Pattern 1: NNth day of Month[,] [YYYY] ───────────────────────────
         pat1 = re.compile(
             r'\b(\d{1,2})(?:st|nd|rd|th)\s+day\s+of\s+'
-            r'(' + month_pat + r')'
+            r'(' + month_pat + r')\.?'
             r'(?:,?\s+(\d{4}))?',
             re.IGNORECASE,
         )
@@ -399,7 +403,7 @@ class ExplicitTimeExtractor(object):
         # ── Pattern 2: [the] NNth of Month [YYYY] ────────────────────────────
         pat2 = re.compile(
             r'(?:the\s+)?(\d{1,2})(?:st|nd|rd|th)\s+of\s+'
-            r'(' + month_pat + r')'
+            r'(' + month_pat + r')\.?'
             r'(?:\s+(\d{4}))?\b',
             re.IGNORECASE,
         )
@@ -416,7 +420,7 @@ class ExplicitTimeExtractor(object):
         # Negative lookahead prevents matching when a 4-digit year follows
         # (those are handled by the existing extract_written_dates pipeline).
         pat3 = re.compile(
-            r'\b(' + month_pat + r')\s+(\d{1,2})(?:st|nd|rd|th)\b'
+            r'\b(' + month_pat + r')\.?\s+(\d{1,2})(?:st|nd|rd|th)\b'
             r'(?!\s*,?\s*\d{4})',
             re.IGNORECASE,
         )
@@ -430,7 +434,7 @@ class ExplicitTimeExtractor(object):
         # Negative lookahead prevents matching when a 4-digit year follows.
         # "of" before the month is excluded (those are patterns 1/2).
         pat4 = re.compile(
-            r'\b(\d{1,2})(?:st|nd|rd|th)\s+(' + month_pat + r')\b'
+            r'\b(\d{1,2})(?:st|nd|rd|th)\s+(' + month_pat + r')\.?\b'
             r'(?!\s+\d{4})',
             re.IGNORECASE,
         )
