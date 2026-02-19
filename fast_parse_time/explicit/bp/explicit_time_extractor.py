@@ -88,8 +88,12 @@ class ExplicitTimeExtractor(object):
         return any(token in MONTH_NAMES for token in tokens)
 
     def _strip_ordinal(self, text: str) -> str:
-        """Strip ordinal suffixes (1st -> 1, 2nd -> 2, etc.)."""
-        return re.sub(r'(\d+)(st|nd|rd|th)\b', r'\1', text)
+        """Strip ordinal suffixes (1st -> 1, 2nd -> 2, etc.) and commas."""
+        # Remove ordinal suffixes
+        text = re.sub(r'(\d+)(st|nd|rd|th)\b', r'\1', text)
+        # Remove commas (Python's date parser doesn't handle "15 March, 2018")
+        text = text.replace(',', '')
+        return text
 
     def _extract_date_patterns(self, input_text: str) -> list[str]:
         """Extract potential date patterns from text."""
@@ -100,9 +104,10 @@ class ExplicitTimeExtractor(object):
         # Includes optional period after month abbreviation (Aug., Dec., etc.)
         pattern1 = rf'(?i)({month_pattern})\.?\s+\d{{1,2}}(?:st|nd|rd|th)?,?\s+\d{{4}}'
 
-        # Pattern for: Day Month Year (e.g., 15 March 2024 or 15th March 2024)
+        # Pattern for: Day Month Year (e.g., 15 March 2024 or 15th March, 2024)
         # Includes optional period after month abbreviation (Aug., Dec., etc.)
-        pattern2 = rf'(?i)\d{{1,2}}(?:st|nd|rd|th)?\s+({month_pattern})\.?\s+\d{{4}}'
+        # Allow optional comma between month and year
+        pattern2 = rf'(?i)\d{{1,2}}(?:st|nd|rd|th)?\s+({month_pattern})\.?,?\s+\d{{4}}'
 
         matches = []
         for pattern in [pattern1, pattern2]:
@@ -385,6 +390,12 @@ class ExplicitTimeExtractor(object):
         result = {}
 
         # ── Pattern 1: NNth day of Month[,] [YYYY] ───────────────────────────
+        # Only match if a 4-digit year is present (strict mode).
+        # Without a year, this is not a parseable, actionable date.
+        #
+        # Related GitHub Issue:
+        #     #63 - False positive: '19th day of May' (no year) returns DAY_MONTH
+        #     https://github.com/craigtrim/fast-parse-time/issues/63
         pat1 = re.compile(
             r'\b(\d{1,2})(?:st|nd|rd|th)\s+day\s+of\s+'
             r'(' + month_pat + r')\.?'
@@ -395,12 +406,13 @@ class ExplicitTimeExtractor(object):
             day, year = m.group(1), m.group(3)
             if not _valid_day(day):
                 continue
+            # Require year component — skip matches without year
             if year and _valid_year(year):
                 result[m.group()] = DateType.FULL_EXPLICIT_DATE.name
-            else:
-                result[m.group()] = DateType.DAY_MONTH.name
 
         # ── Pattern 2: [the] NNth of Month [YYYY] ────────────────────────────
+        # Unlike Pattern 1, "the Nth of Month" without year returns DAY_MONTH.
+        # Only "Nth day of Month" requires year (strict mode per #63).
         pat2 = re.compile(
             r'(?:the\s+)?(\d{1,2})(?:st|nd|rd|th)\s+of\s+'
             r'(' + month_pat + r')\.?'
@@ -432,10 +444,11 @@ class ExplicitTimeExtractor(object):
 
         # ── Pattern 4: NNth Month (no year) ──────────────────────────────────
         # Negative lookahead prevents matching when a 4-digit year follows.
+        # Handles both "15th March 2018" and "15th March, 2018" (with comma).
         # "of" before the month is excluded (those are patterns 1/2).
         pat4 = re.compile(
             r'\b(\d{1,2})(?:st|nd|rd|th)\s+(' + month_pat + r')\.?\b'
-            r'(?!\s+\d{4})',
+            r'(?!,?\s*\d{4})',
             re.IGNORECASE,
         )
         for m in pat4.finditer(input_text):
