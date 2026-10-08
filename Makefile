@@ -16,7 +16,7 @@ activate:
 
 test:
 	echo Unit Testing Microservice
-	poetry run pytest --disable-pytest-warnings
+	poetry run python -m pytest -q
 
 build:
 	@echo Building Microservice

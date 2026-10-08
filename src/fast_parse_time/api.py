@@ -15,68 +15,14 @@ Design principles:
 
 from typing import Dict, List, Optional
 from datetime import date, datetime, timedelta
-from dataclasses import dataclass
 
-from fast_parse_time.explicit.dto import DateType
-from fast_parse_time.explicit.bp import ExplicitTimeExtractor
-from fast_parse_time.explicit.svc import normalize_text
-from fast_parse_time.implicit.svc import AnalyzeTimeReferences, ResolveTimeReferences
-from fast_parse_time.implicit.dto.index_by_slot_kb import Slot
-from fast_parse_time.calendar_dates import (
-    ParsedDate, DateOrder, extract_strings as _extract_date_strings,
+from fast_parse_time.models import DateType, RelativeTime, ExplicitDate, ParseResult, ParsedDate
+from fast_parse_time.explicit.extraction import ExplicitTimeExtractor
+from fast_parse_time.explicit.normalization import normalize_text
+from fast_parse_time.explicit.calendar_parser import (
+    DateOrder, extract_strings as _extract_date_strings,
     parse_strings as _parse_date_strings,
 )
-
-
-# ============================================================================
-# Data Classes for Return Types
-# ============================================================================
-
-@dataclass
-class RelativeTime:
-    """Represents a relative time reference like '5 days ago'"""
-    cardinality: int
-    frame: str  # 'day', 'week', 'month', 'year', 'hour', 'minute', 'second'
-    tense: str  # 'past' or 'future'
-
-    def to_timedelta(self) -> timedelta:
-        """Convert to Python timedelta object"""
-        # Use the internal _get_timedelta method directly for cleaner conversion
-        solution = Slot(self.cardinality, self.frame, self.tense)
-        return ResolveTimeReferences._get_timedelta(solution)
-
-    def to_datetime(self, reference: Optional[datetime] = None) -> datetime:
-        """
-        Convert to absolute datetime
-
-        Args:
-            reference: Reference point for calculation (defaults to now)
-        """
-        if reference is None:
-            reference = datetime.now()
-        delta = self.to_timedelta()
-        # Note: to_timedelta() already handles the sign based on tense
-        # (past = negative, future = positive)
-        return reference + delta
-
-
-@dataclass
-class ExplicitDate:
-    """Represents an explicit date found in text"""
-    text: str  # Original text (e.g., '04/08/2024')
-    date_type: str  # DateType name (e.g., 'FULL_EXPLICIT_DATE')
-
-
-@dataclass
-class ParseResult:
-    """Combined result containing all temporal information found"""
-    explicit_dates: List[ExplicitDate]
-    relative_times: List[RelativeTime]
-
-    @property
-    def has_dates(self) -> bool:
-        """Returns True if any temporal information was found"""
-        return len(self.explicit_dates) > 0 or len(self.relative_times) > 0
 
 
 # ============================================================================
@@ -285,6 +231,8 @@ def extract_relative_times(text: str) -> List[RelativeTime]:
         >>> extract_relative_times("Show records from 5 days ago")
         [RelativeTime(cardinality=5, frame='day', tense='past')]
     """
+    from fast_parse_time.implicit.extraction import AnalyzeTimeReferences
+
     analyzer = AnalyzeTimeReferences()
     solutions = analyzer.process(text)
 
@@ -565,3 +513,15 @@ __all__ = [
     'parse_and_resolve',
     'get_date_range',
 ]
+
+
+def extract_numeric_dates(input_text: str):
+    """
+    Legacy function name - use extract_explicit_dates() instead.
+
+    This function is maintained for backward compatibility but may be
+    deprecated in future versions.
+    """
+    return ExplicitTimeExtractor().extract_numeric_dates(input_text=input_text)
+
+__all__ += ['extract_numeric_dates', 'ExplicitTimeExtractor']

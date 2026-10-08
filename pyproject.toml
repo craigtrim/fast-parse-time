@@ -1,6 +1,6 @@
 [project]
 name = "fast-parse-time"
-version = "1.4.0"
+version = "1.5.0"
 description = "Natural Language (NLP) Extraction of Date and Time"
 readme = "README.md"
 license = "MIT"
@@ -37,12 +37,15 @@ dependencies = [
   "word2number",
 ]
 
+[project.optional-dependencies]
+test = ["pytest>=9,<10", "dateparser==1.4.3"]
+
 [project.urls]
 Repository = "https://github.com/craigtrim/fast-parse-time"
 "Bug Tracker" = "https://github.com/craigtrim/fast-parse-time/issues"
 
 [tool.poetry]
-packages = [{ include = "fast_parse_time" }]
+packages = [{ include = "fast_parse_time", from = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -53,10 +56,15 @@ flakeheaven = "*"
 plac = "*"
 pre-commit = "^2.20.0"
 pytest = "*"
+dateparser = "1.4.3"
 
 [build-system]
 build-backend = "poetry.core.masonry.api"
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--import-mode=importlib"
 
 [tool.flakeheaven]
 base = "https://raw.githubusercontent.com/flakeheaven/flakeheaven/main/pyproject.toml"

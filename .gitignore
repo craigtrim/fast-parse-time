@@ -1,5 +1,9 @@
 # Node artifact files
 node_modules/
+.venv/
+.venv-*/
+build/
+*.egg-info/
 dist/
 
 # Compiled Java class files
