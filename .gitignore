@@ -70,3 +70,5 @@ requirements.txt
 .claude
 pypi.key
 *.bak
+
+BOUNDARIES.md
