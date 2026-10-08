@@ -6,12 +6,13 @@
 import re
 from typing import Optional
 
-from fast_parse_time.core import configure_logger, Stopwatch
-from fast_parse_time.implicit.dmo import DigitTextReplacer
-from fast_parse_time.implicit.dmo import KeywordSequenceFilter
-from fast_parse_time.implicit.dmo import KeywordSequenceExtractor
-from fast_parse_time.implicit.dmo import SequenceSolutionFinder
-from fast_parse_time.implicit.dto.index_by_slot_kb import Slot
+from fast_parse_time._logging import configure_logger
+from fast_parse_time._timing import Stopwatch
+from fast_parse_time.implicit.normalization import DigitTextReplacer
+from fast_parse_time.implicit.sequences import KeywordSequenceFilter
+from fast_parse_time.implicit.sequences import KeywordSequenceExtractor
+from fast_parse_time.implicit.sequences import SequenceSolutionFinder
+from fast_parse_time.implicit.models import Slot
 
 
 # All recognized time unit words (singular, plural, abbreviated forms)

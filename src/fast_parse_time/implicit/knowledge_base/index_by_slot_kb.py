@@ -7,14 +7,10 @@
 #
 # Convention: Slot(cardinality: int|str, frame: str, tense: str)
 
-from typing import NamedTuple
+from fast_parse_time.implicit.models import Slot
 
 
-class Slot(NamedTuple):
-    """Structured representation of a resolved time slot."""
-    cardinality: int | str  # str for informal cardinalities e.g. '2+'
-    frame: str
-    tense: str
+
 
 
 # Frame constants — avoids repeating string literals across 118k+ entries
