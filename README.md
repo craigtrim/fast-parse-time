@@ -7,167 +7,142 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Tests](https://img.shields.io/badge/tests-21170-brightgreen.svg)](https://github.com/craigtrim/fast-parse-time/tree/master/tests)
 
-Extract dates and times from text. Fast, deterministic, zero cost.
-
-## Why?
-
-LLMs can parse dates, but they're slow, expensive, and non-deterministic. This library gives you:
-
-- **Sub-millisecond performance** - Process thousands of documents per second
-- **Zero API costs** - No per-request charges
-- **Deterministic results** - Same input always produces same output
-- **Simple API** - One function call, everything extracted
+`fast-parse-time` extracts calendar dates and relative time expressions from
+text. The calendar-date functions also accept a list of strings and can use an
+explicit date range to infer missing years. Parsing runs locally without network
+calls or a language model.
 
 ## Install
 
-```bash
-pip install fast-parse-time
+Python 3.10 or later is required.
+
+```sh
+python -m pip install fast-parse-time
 ```
 
-## Usage
+## Find dates in a list
+
+`extract_date_strings` returns the date text in the order it appears. Each list
+entry can contain a date, a sentence with several dates, or unrelated text.
+Matches retain their spelling and internal whitespace. Repeated dates remain in
+the result.
 
 ```python
+from fast_parse_time import extract_date_strings
+
+texts = ['Term: 3/28/2011 to 4/22/2011', 'Mar 28', 'Apr 22', 'No classes']
+
+assert extract_date_strings(texts) == [
+    '3/28/2011', '4/22/2011', 'Mar 28', 'Apr 22',
+]
+```
+
+## Parse dates and infer missing years
+
+`parse_date_strings` returns a record for each date occurrence. When at least
+two distinct full dates have unambiguous interpretations, the earliest and
+latest define an inclusive range. A date without a year is resolved only when
+that range supports a single calendar date.
+
+```python
+from datetime import date
+from fast_parse_time import parse_date_strings
+
+matches = parse_date_strings(['3/28/2011', '4/22/2011', 'Mar 28', 'Apr 22'])
+
+assert [match.date for match in matches] == [
+    date(2011, 3, 28), date(2011, 4, 22),
+    date(2011, 3, 28), date(2011, 4, 22),
+]
+```
+
+The same inference works when the range crosses a year boundary. Both calendar
+functions accept a whole string as well as a list.
+
+```python
+from datetime import date
+from fast_parse_time import parse_date_strings
+
+matches = parse_date_strings(
+    'Term runs from 11/28/2025 to 4/14/2026; meetings on Nov 22 and March 13'
+)
+
+assert matches[-1].date == date(2026, 3, 13)
+assert matches[-2].text == 'Nov 22'
+assert matches[-2].year is None
+```
+
+March 13 occurs once inside that range, in 2026. November 22 falls outside it in
+both years, so its year remains unknown. The parser keeps the occurrence in the
+result. It does not substitute the current year.
+
+Use `date_range=(start, end)` to supply your own bounds. If several dates remain
+possible, `.date` is `None` and `.candidates` contains the alternatives. The
+[calendar-date guide](docs/calendar-dates.md) covers numeric date order, leap
+days, and unresolved results.
+
+## Extract explicit dates and relative expressions
+
+`parse_dates` returns explicit date text with classification labels, along with
+relative expressions such as `5 days ago`. Use `parse_date_strings` when you need
+calendar dates as Python `date` objects.
+
+```python
+from datetime import datetime
 from fast_parse_time import parse_dates
 
-text = "Meeting on 04/08/2024 to discuss issues from 5 days ago"
-result = parse_dates(text)
+result = parse_dates('Meeting on 04/08/2024 about issues from 5 days ago')
 
-# Explicit dates found in text
-print(result.explicit_dates)
-# [ExplicitDate(text='04/08/2024', date_type='FULL_EXPLICIT_DATE')]
-
-# Relative time expressions
-print(result.relative_times)
-# [RelativeTime(cardinality=5, frame='day', tense='past')]
-
-# Convert to Python datetime
-for time_ref in result.relative_times:
-    print(time_ref.to_datetime())
-    # datetime.datetime(2025, 11, 14, ...)
+assert result.explicit_dates[0].text == '04/08/2024'
+assert result.explicit_dates[0].date_type == 'FULL_EXPLICIT_DATE'
+assert result.relative_times[0].to_datetime(datetime(2026, 1, 1)) == datetime(2025, 12, 27)
 ```
 
-## What It Extracts
-
-**Explicit dates:**
-```python
-"Event on 04/08/2024"          → 04/08/2024 (full date)
-"Meeting scheduled for 3/24"   → 3/24 (month/day)
-"Copyright 2024"               → 2024 (year only)
-"Ambiguous: 4/8"               → 4/8 (flagged as ambiguous)
-"Published March 15, 2024"     → March 15, 2024 (written month)
-"Filed in 2024"                → 2024 (year in prose)
-```
-
-**Year ranges:**
-```python
-"Active 2014-2015"             → 2014-2015 (year range)
-"From 2010 to 2020"           → From 2010 to 2020 (year range)
-"Revenue grew 2019–2023"      → 2019-2023 (en/em dash normalized)
-"Contract 2023-24"            → 2023-24 (abbreviated)
-```
-
-**Relative times:**
-```python
-"5 days ago"                   → 5 days (past)
-"last couple of weeks"         → 2 weeks (past)
-"30 minutes ago"               → 30 minutes (past)
-"half an hour ago"             → 1 hour (past)
-"a few days ago"               → 3 days (past)
-```
-
-## Examples
-
-### Parse everything at once
+You can also request relative offsets directly. Past references produce negative
+offsets; future references produce positive offsets.
 
 ```python
-result = parse_dates("Report from 04/08/2024 covering issues from last week")
+from datetime import timedelta
+from fast_parse_time import resolve_to_timedelta
 
-result.explicit_dates  # ['04/08/2024']
-result.relative_times  # [RelativeTime(cardinality=1, frame='week', tense='past')]
+assert resolve_to_timedelta('5 days ago') == [timedelta(days=-5)]
+assert resolve_to_timedelta('half an hour ago') == [timedelta(minutes=-30)]
+assert resolve_to_timedelta('tomorrow') == [timedelta(days=1)]
 ```
 
-### Just get dates
+## Choose a function
 
-```python
-from fast_parse_time import extract_explicit_dates
+| What you need | Function | Result |
+|---|---|---|
+| Date strings from prose or a list | `extract_date_strings` | `list[str]` |
+| Calendar dates with range-based year inference | `parse_date_strings` | `list[ParsedDate]` |
+| Explicit date classifications and relative references | `parse_dates` | `ParseResult` |
+| Explicit date classifications, including year-only and month/year expressions | `extract_explicit_dates` | `dict[str, str]` |
+| Relative expressions as quantities and units | `extract_relative_times` | `list[RelativeTime]` |
+| Relative expressions resolved against a reference time | `resolve_to_datetime` | `list[datetime]` |
 
-dates = extract_explicit_dates("Event on 04/08/2024 or maybe 3/24")
-# {'04/08/2024': 'FULL_EXPLICIT_DATE', '3/24': 'MONTH_DAY'}
-```
+## Interpreting results
 
-### Convert to datetime objects
+Numeric dates can have more than one interpretation. `parse_date_strings`
+preserves that ambiguity by default; use `date_order='mdy'` or `'dmy'` when the
+source's convention is known. A classification such as `FULL_EXPLICIT_DATE`
+identifies a complete date expression without selecting its month/day order.
 
-```python
-from fast_parse_time import resolve_to_datetime
-
-datetimes = resolve_to_datetime("Show me data from 5 days ago")
-# [datetime.datetime(2025, 11, 14, ...)]
-```
-
-## Features
-
-### Parse a list of dates and infer missing years
-
-```python
-from fast_parse_time import extract_date_strings, parse_date_strings
-
-texts = ['3/28/2011', '4/22/2011', 'Mar 28', 'Apr 22']
-extract_date_strings(texts)  # ['3/28/2011', '4/22/2011', 'Mar 28', 'Apr 22']
-matches = parse_date_strings(texts)
-matches[2].date  # datetime.date(2011, 3, 28)
-matches[3].date  # datetime.date(2011, 4, 22)
-```
-
-The complete dates define an inclusive range. Missing years are resolved only
-when the range supports them; otherwise `.year` remains `None`. Use
-`date_range=(start, end)` to supply bounds explicitly. Both functions also accept
-a whole prose string. See [Calendar dates and year inference](docs/calendar-dates.md)
-for ambiguity handling and parsed results.
-
-### Extraction formats
-
-- Multiple date formats: `04/08/2024`, `3/24`, `2024-06-05`, `March 15, 2024`
-- Multiple delimiters: `/`, `-`, `.`
-- Year ranges: `2014-2015`, `2010 to 2020`, `from 2018 through 2022`, `2023-24`
-- Unicode normalization: en dash, em dash, and other hyphen variants accepted automatically
-- Written months: `March 15, 2024`, `Mar 15, 2024`, `15 March 2024`
-- Year-only in prose: `Copyright 2024`, `filed in 2019`
-- Relative time expressions: "5 days ago", "last week", "couple of months ago"
-- Informal expressions: "half an hour ago", "a few days ago", "several weeks ago"
-- Named day and time-of-day references: "last Monday", "this morning", "yesterday"
-- Ambiguity detection: Flags dates like `4/8` that could be April 8 or August 4
-- Time frame support: seconds, minutes, hours, days, weeks, months, years
+Keep unrelated periods in separate batches, or supply explicit bounds. Relative
+month and year offsets use 30-day months and 365-day years. Pass a fixed
+`reference` when resolving offsets if the result needs to be reproducible.
 
 ## Documentation
 
-- [API Reference](https://github.com/craigtrim/fast-parse-time/blob/master/docs/API.md)
-- [Functions](https://github.com/craigtrim/fast-parse-time/blob/master/docs/functions.md) - All functions with examples
-- [Types](https://github.com/craigtrim/fast-parse-time/blob/master/docs/types.md) - Data classes and DateType enum
-- [System Boundaries](https://github.com/craigtrim/fast-parse-time/blob/master/BOUNDARIES.md) - Design decisions and limitations
+- [API reference](docs/API.md) lists the public functions and their return values.
+- [Calendar dates and year inference](docs/calendar-dates.md) explains batch parsing and ambiguity.
+- [Function examples](docs/functions.md) covers extraction, filtering, and resolution.
+- [Result types](docs/types.md) describes the fields returned by each API.
+- [Development](docs/development.md) covers local tests and distribution builds.
 
-## Performance
+## License and author
 
-Typical extraction takes < 1ms per document. No network calls, no model inference, pure Python.
+The library is available under the [MIT license](LICENSE).
+Craig Trim maintains it: [craigtrim@gmail.com](mailto:craigtrim@gmail.com).
 
-## Development
-
-```bash
-python -m pip install -e ".[test]"
-python -m pytest -q
-```
-
-Source lives under `src/fast_parse_time`; install the checkout before running
-tests. See [Development and package layout](docs/development.md) for the module
-structure, compatibility imports, lookup-table maintenance, and wheel testing.
-
-## License
-
-MIT - See [LICENSE](LICENSE) for details.
-
-## Author
-
-**Craig Trim** - [craigtrim@gmail.com](mailto:craigtrim@gmail.com)
-
----
-
-[Report Issues](https://github.com/craigtrim/fast-parse-time/issues) | [API Docs](https://github.com/craigtrim/fast-parse-time/blob/master/docs/API.md) | [PyPI](https://pypi.org/project/fast-parse-time/)
+[Report an issue](https://github.com/craigtrim/fast-parse-time/issues).

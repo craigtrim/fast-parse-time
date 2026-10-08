@@ -1,9 +1,10 @@
 # Calendar dates and year inference
 
-Use `extract_date_strings` to get a `list[str]` of date text, and
-`parse_date_strings` to get parsed calendar dates. Both accept one prose string
-or a `list[str]` containing dates, prose, and non-date text. Matches keep their
-original spelling and internal whitespace, source order, and duplicate occurrences.
+`extract_date_strings` returns the date text found in a string or `list[str]`.
+`parse_date_strings` accepts the same input and returns parsed occurrences.
+List entries can contain dates, surrounding prose, or unrelated text. Matches
+retain their spelling and internal whitespace. Results follow source order and
+include duplicate occurrences.
 
 ```python
 from datetime import date
@@ -29,6 +30,9 @@ Their order in the input does not matter. Each partial date is checked against
 the actual calendar inside those bounds.
 
 ```python
+from datetime import date
+from fast_parse_time import parse_date_strings
+
 text = '11/28/2025 through 4/14/2026; Nov 22 and March 13'
 matches = parse_date_strings(text)
 
@@ -51,6 +55,9 @@ If the input contains dates from unrelated periods, split it into separate
 batches or provide bounds explicitly:
 
 ```python
+from datetime import date
+from fast_parse_time import parse_date_strings
+
 matches = parse_date_strings(
     ['March 13', 'Nov 22'],
     date_range=(date(2025, 11, 28), date(2026, 4, 14)),
@@ -61,8 +68,9 @@ assert matches[1].year is None
 
 Explicit bounds override automatically detected bounds. They constrain missing
 years and can narrow ambiguous numeric dates; they do not erase or change a
-full date that explicitly states a different year. Equal start/end bounds are
-allowed. Reversed bounds raise `ValueError`.
+full date that explicitly states a different year. When an ambiguous full date
+has no interpretation inside the range, its original candidates remain. Equal
+start/end bounds are allowed. Reversed bounds raise `ValueError`.
 
 ## Unresolved dates
 
@@ -75,7 +83,7 @@ allowed. Reversed bounds raise `ValueError`.
 | `day` | Day number, or `None` if the day is ambiguous |
 | `candidates` | Sorted, distinct tuple of supported `datetime.date` values |
 | `date` | The single candidate, or `None` when there is no unique date |
-| `year` | The year shared by all candidates, or `None` when unknown/ambiguous |
+| `year` | The year shared by all candidates, or `None` when unknown or ambiguous |
 
 An empty `candidates` tuple means no concrete date can be resolved. It does not
 mean the matched text was discarded. For example, `February 29` remains a valid
@@ -84,9 +92,13 @@ partial date even without a leap year in the range.
 A range containing multiple occurrences preserves the alternatives:
 
 ```python
-match = parse_date_strings(
+from datetime import date
+from fast_parse_time import parse_date_strings
+
+matches = parse_date_strings(
     'March 13', date_range=(date(2024, 1, 1), date(2026, 12, 31)),
-)[0]
+)
+match = matches[0]
 assert match.candidates == (
     date(2024, 3, 13), date(2025, 3, 13), date(2026, 3, 13),
 )
@@ -95,6 +107,7 @@ assert match.date is None
 
 # Applications that only need resolved dates can filter explicitly.
 resolved = [match.date for match in matches if match.date is not None]
+assert resolved == []
 ```
 
 Leap days are calendar-validated. A range from 2023 through 2026 resolves
@@ -106,6 +119,9 @@ The default `date_order='auto'` retains both MDY and DMY interpretations when
 both are calendar-valid. The range can remove an interpretation:
 
 ```python
+from datetime import date
+from fast_parse_time import parse_date_strings
+
 match = parse_date_strings(['3/28/2011', '4/22/2011', '3/4'])[-1]
 assert match.date == date(2011, 4, 3)
 ```
@@ -116,9 +132,16 @@ source's convention can pass `date_order='mdy'` or `'dmy'`. Year-first numeric
 dates always use YMD; named months are unaffected by this option.
 
 ```python
+from datetime import date
+from fast_parse_time import parse_date_strings
+
 assert parse_date_strings('3/4/2011', date_order='mdy')[0].date == date(2011, 3, 4)
 assert parse_date_strings('3/4/2011', date_order='dmy')[0].date == date(2011, 4, 3)
 ```
+
+`extract_date_strings` accepts either valid numeric order. A string it finds can
+be excluded by `parse_date_strings` if it is invalid under the specified order.
+For example, `28/3/2011` is valid with `'dmy'` and invalid with `'mdy'`.
 
 ## Supported input and validation
 
@@ -134,19 +157,15 @@ assert parse_date_strings('3/4/2011', date_order='dmy')[0].date == date(2011, 4,
 
 This API requires a month and day. Standalone years, month/year expressions,
 two-digit years, timestamps, and relative expressions are outside its contract.
-Existing APIs remain available for their existing formats. ASCII numeric digits
-and English month names are required. A syntactically valid numeric date cannot
-always be distinguished from an unrelated numeric label without application context.
+Use `extract_explicit_dates` for classifications that include year-only and
+month/year expressions, or `extract_relative_times` for relative references.
+Calendar-date parsing requires ASCII numeric digits and English month names.
+A numeric label that also forms a valid date can still match without additional
+application context.
 
 Invalid input types raise `TypeError`. `date_range` must be a tuple of two
 `datetime.date` objects, not strings or `datetime.datetime` objects. An unsupported
 `date_order` raises `ValueError`. Empty strings and empty lists return `[]`.
 
-## Compatibility
-
-These functions are additions to the public API. `parse_dates`,
-`extract_explicit_dates`, `ExplicitDate`, and `ParseResult` retain their existing
-signatures and return types. No event wrapper or external parsing dependency is
-introduced.
-
-Tracked in [issue #73](https://github.com/craigtrim/fast-parse-time/issues/73).
+See [Result types](types.md) for the `ParsedDate` fields and
+[Function examples](functions.md) for the other extraction APIs.

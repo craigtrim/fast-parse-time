@@ -1,134 +1,146 @@
-# Types
+# Result types
 
-Data classes and enumerations exported from `fast_parse_time`.
+The public result types are available from `fast_parse_time`. Choose a type
+based on whether you need a calendar interpretation, a classification, or a
+relative offset.
 
-Their definitions live in `fast_parse_time.models`. Imports from
-`fast_parse_time` and `fast_parse_time.api` remain supported and refer to the
-same types.
+## ParsedDate
 
----
+`parse_date_strings` returns a `ParsedDate` for each calendar-date occurrence.
+The record is frozen. It retains the matched text even when the year or numeric
+order remains unresolved.
 
-## Data Classes
+| Attribute | Type | Meaning |
+|---|---|---|
+| `text` | `str` | Original matched text |
+| `month` | `int` or `None` | Month number when known |
+| `day` | `int` or `None` | Day number when known |
+| `candidates` | `tuple[date, ...]` | Supported calendar interpretations |
+| `date` | `date` or `None` | The only candidate, if exactly one remains |
+| `year` | `int` or `None` | The year shared by all candidates, if any |
 
-### `ParsedDate`
-
-Returned by `parse_date_strings`. A frozen record with `text`, `month`, `day`,
-and a `candidates: tuple[datetime.date, ...]` field. The `date` property returns
-the unique resolved date or `None`; `year` returns the shared candidate year or
-`None`. Unknown or ambiguous month/day components are also `None`. An unresolved
-partial date keeps its original text and known components.
-
-See [Calendar dates and year inference](calendar-dates.md) for examples and the
-rules for preserving ambiguity.
-
-### `RelativeTime`
-
-Represents a relative time expression extracted from text.
+A year can be known while the month and day remain ambiguous. An empty
+`candidates` tuple means the parser could not resolve a concrete date from the
+available text and bounds.
 
 ```python
-@dataclass
-class RelativeTime:
-    cardinality: int  # The numeric quantity (e.g., 5 for "5 days ago")
-    frame: str        # Time unit: 'second', 'minute', 'hour', 'day', 'week', 'month', 'year'
-    tense: str        # 'past' or 'future'
+from datetime import date
+from fast_parse_time import parse_date_strings
 
-    def to_timedelta(self) -> timedelta: ...
-    def to_datetime(self, reference: datetime = None) -> datetime: ...
+match = parse_date_strings('3/4/2011')[0]
+
+assert match.text == '3/4/2011'
+assert match.candidates == (date(2011, 3, 4), date(2011, 4, 3))
+assert match.year == 2011
+assert match.month is None
+assert match.day is None
+assert match.date is None
 ```
 
-**Example:**
-```python
-rt = RelativeTime(cardinality=5, frame='day', tense='past')
-rt.to_timedelta()              # timedelta(days=-5)
-rt.to_datetime()               # datetime 5 days before now
-rt.to_datetime(ref_datetime)   # datetime 5 days before ref_datetime
-```
+See [Calendar dates and year inference](calendar-dates.md) for partial dates,
+range selection, and unresolved years.
 
-### `ExplicitDate`
+## ExplicitDate
 
-Represents an explicit date string found in text.
+An `ExplicitDate` contains `text: str` and `date_type: str`. The
+`parse_dates` function returns these records in `result.explicit_dates`.
+The classification is a `DateType` member name.
 
-```python
-@dataclass
-class ExplicitDate:
-    text: str       # The original matched string, e.g. '04/08/2024' or 'March 15, 2024'
-    date_type: str  # DateType name, e.g. 'FULL_EXPLICIT_DATE'
-```
-
-### `ParseResult`
-
-Combined result returned by `parse_dates()`.
+Text can reflect normalization performed during extraction. An `ExplicitDate`
+does not contain a Python `date`, and a complete-date classification does not
+establish the numeric month/day order.
 
 ```python
-@dataclass
-class ParseResult:
-    explicit_dates: List[ExplicitDate]
-    relative_times: List[RelativeTime]
-    has_dates: bool  # Property: True if any temporal info found
+from fast_parse_time import ExplicitDate, parse_dates
+
+assert parse_dates('From 2010 to 2020').explicit_dates == [
+    ExplicitDate(text='2010-2020', date_type='YEAR_RANGE'),
+]
 ```
 
----
+## RelativeTime
+
+A `RelativeTime` describes an extracted quantity, unit, and tense.
+
+| Field | Meaning |
+|---|---|
+| `cardinality` | Quantity, such as 5 in `5 days ago` |
+| `frame` | `second`, `minute`, `hour`, `day`, `week`, `month`, or `year` |
+| `tense` | `past`, `future`, or `present` |
+
+`to_timedelta()` returns a signed duration. `to_datetime(reference=None)`
+adds that duration to the supplied datetime, defaulting to `datetime.now()`.
+
+```python
+from datetime import datetime, timedelta
+from fast_parse_time import RelativeTime
+
+relative = RelativeTime(cardinality=5, frame='day', tense='past')
+
+assert relative.to_timedelta() == timedelta(days=-5)
+assert relative.to_datetime(datetime(2026, 1, 1)) == datetime(2025, 12, 27)
+```
+
+Weeks use seven days, months use 30 days, and years use 365 days. These
+conversions do not follow varying calendar-month lengths or leap years.
+Unsupported frame values raise `NotImplementedError` during conversion.
+
+Extraction can normalize the quantity and frame. For example, `half an hour
+ago` becomes 30 minutes, and `this morning` becomes a zero-day present
+reference without a clock time. Named weekdays use the local date at extraction
+time. Decimal quantities are truncated before matching.
+
+## ParseResult
+
+`parse_dates` returns a `ParseResult` with two lists:
+
+| Attribute | Type | Meaning |
+|---|---|---|
+| `explicit_dates` | `list[ExplicitDate]` | Explicit text and classification records |
+| `relative_times` | `list[RelativeTime]` | Relative quantities and units |
+| `has_dates` | `bool` | Property that is true when either list is nonempty |
+
+```python
+from fast_parse_time import parse_dates
+
+result = parse_dates('Hello world')
+
+assert result.explicit_dates == []
+assert result.relative_times == []
+assert not result.has_dates
+```
 
 ## DateType
 
-The `DateType` enum defines all possible classifications for extracted dates. The `date_type` field on `ExplicitDate` contains the `.name` of the matching enum member.
+Classification functions return the names of `DateType` members. Pass
+`DateType.FULL_EXPLICIT_DATE.name`, for example, to `parse_dates_with_type`.
+The enum names describe extraction categories; use `ParsedDate` to inspect
+concrete calendar interpretations.
 
-### Implemented (returned by extraction functions)
-
-| Name | Example | Notes |
+| Name | Input example | Classification |
 |---|---|---|
-| `FULL_EXPLICIT_DATE` | `04/08/2024`, `March 15, 2024` | Complete date with year, month, and day |
-| `YEAR_ONLY` | `2024` | Four-digit year standing alone |
-| `MONTH_DAY` | `3/24` | Month and day, no year |
-| `DAY_MONTH` | `15/3` | Day and month, European-style |
-| `DAY_MONTH_AMBIGUOUS` | `4/8` | Could be April 8 or August 4 |
-| `MONTH_YEAR` | `12/2024` | Month and year, no day |
-| `YEAR_MONTH` | `2024-03` | ISO-style year then month |
-| `YEAR_RANGE` | `2014-2015`, `2010 to 2020`, `2023-24` | Span of two years; accepts en/em dash, `to`, `through`, abbreviated second year |
+| `FULL_EXPLICIT_DATE` | `04/08/2024`, `March 15, 2024` | Complete date expression |
+| `YEAR_ONLY` | `in 2019` | Year recognized in context |
+| `MONTH_DAY` | `3/24` | Month followed by day |
+| `DAY_MONTH` | `15/3` | Day followed by month |
+| `DAY_MONTH_AMBIGUOUS` | `4/8`, `March 13` | Ambiguous numeric order or a named-month expression requiring further context |
+| `MONTH_YEAR` | `March 2024`, `Oct-23` | Month and year |
+| `YEAR_MONTH` | `2023-Oct` | Year and month |
+| `YEAR_RANGE` | `2014-2015`, `From 2010 to 2020` | Year span |
 
-### Defined but not yet extracted
+The enum also defines `SEASON_YEAR`, `TIMEFRAME_RELATIVE_TO_NOW`,
+`NON_SPECIFIC_FUTURE_PAST`, `EVENT_BASED_RELATIVE_DATE`,
+`SEASONAL_OR_QUARTERLY`, `RECURRENT_DATE`, `FUZZY_DATE`, and `NO_DATE`.
+The public classification functions do not currently emit those labels.
+Relative expressions are represented by `RelativeTime`; an input with no
+matches produces empty collections.
 
-These members exist in the enum but the library does not currently produce them.
+`DateType.find(name)` accepts a name with surrounding whitespace or different
+capitalization. It returns the member, or `None` for an unrecognized name.
 
-| Name | Example |
-|---|---|
-| `SEASON_YEAR` | `Summer 2013` |
-| `TIMEFRAME_RELATIVE_TO_NOW` | `5 days ago` (handled via `RelativeTime`) |
-| `NON_SPECIFIC_FUTURE_PAST` | `a long time ago` |
-| `EVENT_BASED_RELATIVE_DATE` | `the day after New Year's` |
-| `SEASONAL_OR_QUARTERLY` | `Q1`, `this winter` |
-| `RECURRENT_DATE` | `every Monday` |
-| `FUZZY_DATE` | `late March`, `early 2020s` |
-| `NO_DATE` | (no temporal content found) |
+```python
+from fast_parse_time import DateType
 
----
-
-## Supported Time Frames
-
-For relative time expressions, the `frame` field on `RelativeTime` will be one of:
-
-| Frame | Example expressions |
-|---|---|
-| `second` | `30 seconds ago` |
-| `minute` | `10 minutes ago` |
-| `hour` | `3 hours ago`, `half an hour ago`, `this morning` |
-| `day` | `5 days ago`, `last Monday`, `yesterday` |
-| `week` | `last week`, `2 weeks ago` |
-| `month` | `last month`, `3 months ago` |
-| `year` | `last year`, `2 years ago` |
-
----
-
-## Supported Delimiters
-
-For explicit numeric dates:
-
-| Delimiter | Example |
-|---|---|
-| `/` | `04/08/2024` |
-| `-` | `2024-06-05` |
-| `.` | `02.14.2024` |
-
-> **Note:** Only one delimiter type is processed per extraction call. See [BOUNDARIES.md](https://github.com/craigtrim/fast-parse-time/blob/master/BOUNDARIES.md#1-single-delimiter-type-per-extraction).
-
-> **Unicode normalization:** En dash (–), em dash (—), and other Unicode hyphen variants are normalized to ASCII `-` before extraction. Space-padded hyphens (`2014 - 2015`) are also collapsed. This applies automatically; no special handling is required by callers.
+assert DateType.find(' full_explicit_date ') is DateType.FULL_EXPLICIT_DATE
+assert DateType.find('unknown') is None
+```
