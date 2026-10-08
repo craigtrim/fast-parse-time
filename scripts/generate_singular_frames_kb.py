@@ -20,11 +20,11 @@ import ast
 import os
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DTO_DIR = os.path.join(BASE, 'fast_parse_time', 'implicit', 'dto')
+KB_DIR = os.path.join(BASE, 'src', 'fast_parse_time', 'implicit', 'knowledge_base')
 
-SLOT_KB_PATH = os.path.join(DTO_DIR, 'index_by_slot_kb.py')
-KEYTERM_KB_PATH = os.path.join(DTO_DIR, 'index_by_keyterm_kb.py')
-COUNTER_KB_PATH = os.path.join(DTO_DIR, 'keyterm_counter_kb.py')
+SLOT_KB_PATH = os.path.join(KB_DIR, 'index_by_slot_kb.py')
+KEYTERM_KB_PATH = os.path.join(KB_DIR, 'index_by_keyterm_kb.py')
+COUNTER_KB_PATH = os.path.join(KB_DIR, 'keyterm_counter_kb.py')
 
 # Range of cardinalities to generate patterns for
 MAX_CARDINALITY = 999  # matches existing pattern in KB
@@ -41,7 +41,7 @@ def build_slot_entries() -> dict:
         '10 year ago' -> Slot(cardinality=10, frame='year', tense='past')
     """
     # Import Slot from the KB file
-    from fast_parse_time.implicit.dto.index_by_slot_kb import Slot
+    from fast_parse_time.implicit.models import Slot
 
     entries = {}
 

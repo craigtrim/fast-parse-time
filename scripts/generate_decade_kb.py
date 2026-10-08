@@ -17,14 +17,15 @@ Updates three KB files:
 
 import ast
 import os
-import sys
+
+from fast_parse_time.implicit.models import Slot
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DTO_DIR = os.path.join(BASE, 'fast_parse_time', 'implicit', 'dto')
+KB_DIR = os.path.join(BASE, 'src', 'fast_parse_time', 'implicit', 'knowledge_base')
 
-SLOT_KB_PATH = os.path.join(DTO_DIR, 'index_by_slot_kb.py')
-KEYTERM_KB_PATH = os.path.join(DTO_DIR, 'index_by_keyterm_kb.py')
-COUNTER_KB_PATH = os.path.join(DTO_DIR, 'keyterm_counter_kb.py')
+SLOT_KB_PATH = os.path.join(KB_DIR, 'index_by_slot_kb.py')
+KEYTERM_KB_PATH = os.path.join(KB_DIR, 'index_by_keyterm_kb.py')
+COUNTER_KB_PATH = os.path.join(KB_DIR, 'keyterm_counter_kb.py')
 
 DECADE_MULTIPLIER = 10
 MAX_DECADES = 100  # supports 1..100 decades (= 10..1000 years)
@@ -38,7 +39,7 @@ def unit_word(n: int) -> str:
 def build_slot_entries() -> dict:
     """
     Build all decade slot entries.
-    Returns dict mapping phrase -> {Cardinality, Frame, Tense}.
+    Returns dict mapping phrase -> Slot(cardinality, frame, tense).
     """
     entries = {}
     cardinality = DECADE_MULTIPLIER  # always N * 10
@@ -60,9 +61,9 @@ def build_slot_entries() -> dict:
     ]
 
     for phrase in singular_past:
-        entries[phrase] = {'Cardinality': cardinality, 'Frame': 'year', 'Tense': 'past'}
+        entries[phrase] = Slot(cardinality, 'year', 'past')
     for phrase in singular_future:
-        entries[phrase] = {'Cardinality': cardinality, 'Frame': 'year', 'Tense': 'future'}
+        entries[phrase] = Slot(cardinality, 'year', 'future')
 
     # Numeric patterns for N=1..MAX_DECADES
     for n in range(1, MAX_DECADES + 1):
@@ -72,21 +73,21 @@ def build_slot_entries() -> dict:
         past_suffixes = ['ago', 'back', 'before now', 'prior']
         for suffix in past_suffixes:
             phrase = f'{n} {unit} {suffix}'
-            entries[phrase] = {'Cardinality': years, 'Frame': 'year', 'Tense': 'past'}
+            entries[phrase] = Slot(years, 'year', 'past')
 
         future_suffixes = ['from now']
         for suffix in future_suffixes:
             phrase = f'{n} {unit} {suffix}'
-            entries[phrase] = {'Cardinality': years, 'Frame': 'year', 'Tense': 'future'}
+            entries[phrase] = Slot(years, 'year', 'future')
 
         # in N decade(s)
-        entries[f'in {n} {unit}'] = {'Cardinality': years, 'Frame': 'year', 'Tense': 'future'}
+        entries[f'in {n} {unit}'] = Slot(years, 'year', 'future')
 
         # last/next/past N decade(s) — for N >= 2 (N=1 handled via 'last decade' etc.)
         if n >= 2:
-            entries[f'last {n} {unit}'] = {'Cardinality': years, 'Frame': 'year', 'Tense': 'past'}
-            entries[f'next {n} {unit}'] = {'Cardinality': years, 'Frame': 'year', 'Tense': 'future'}
-            entries[f'past {n} {unit}'] = {'Cardinality': years, 'Frame': 'year', 'Tense': 'past'}
+            entries[f'last {n} {unit}'] = Slot(years, 'year', 'past')
+            entries[f'next {n} {unit}'] = Slot(years, 'year', 'future')
+            entries[f'past {n} {unit}'] = Slot(years, 'year', 'past')
 
     return entries
 
@@ -118,14 +119,13 @@ def serialize_kb(var_name: str, kb: dict, header: str) -> str:
 
 
 def get_file_header(path: str) -> str:
-    """Extract the shebang + encoding comment from a KB file."""
+    """Preserve imports and constants needed by the serialized table."""
     with open(path, 'r', encoding='utf-8') as f:
         lines = []
         for line in f:
-            if line.startswith('#') or line.strip() == '':
-                lines.append(line.rstrip())
-            else:
+            if line.startswith(('d_index_by_', 'd_keyterm_counter_kb')) and '=' in line:
                 break
+            lines.append(line.rstrip())
     return '\n'.join(lines)
 
 
