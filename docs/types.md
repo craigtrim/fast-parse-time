@@ -6,6 +6,17 @@ Data classes and enumerations exported from `fast_parse_time`.
 
 ## Data Classes
 
+### `ParsedDate`
+
+Returned by `parse_date_strings`. A frozen record with `text`, `month`, `day`,
+and a `candidates: tuple[datetime.date, ...]` field. The `date` property returns
+the unique resolved date or `None`; `year` returns the shared candidate year or
+`None`. Unknown or ambiguous month/day components are also `None`. An unresolved
+partial date keeps its original text and known components.
+
+See [Calendar dates and year inference](calendar-dates.md) for examples and the
+rules for preserving ambiguity.
+
 ### `RelativeTime`
 
 Represents a relative time expression extracted from text.

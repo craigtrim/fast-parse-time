@@ -1,5 +1,16 @@
 # Functions
 
+## Batch calendar dates
+
+- `extract_date_strings(texts: str | list[str]) -> list[str]` identifies original
+  date strings, preserving order and duplicates.
+- `parse_date_strings(texts: str | list[str], *, date_range=None, date_order='auto') -> list[ParsedDate]`
+  parses calendar dates and infers missing years within inclusive bounds. Unknown
+  years remain `None`; `.date` is present only for a unique interpretation.
+
+See [Calendar dates and year inference](calendar-dates.md) for the complete
+contract, examples, and ambiguity handling.
+
 All public functions exported from `fast_parse_time`.
 
 ---

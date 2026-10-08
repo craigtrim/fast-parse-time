@@ -5,7 +5,7 @@
 [![Downloads](https://pepy.tech/badge/fast-parse-time)](https://pepy.tech/project/fast-parse-time)
 [![Downloads](https://pepy.tech/badge/fast-parse-time/month)](https://pepy.tech/project/fast-parse-time)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://img.shields.io/badge/tests-8560-brightgreen.svg)](https://github.com/craigtrim/fast-parse-time/tree/master/tests)
+[![Tests](https://img.shields.io/badge/tests-21128-brightgreen.svg)](https://github.com/craigtrim/fast-parse-time/tree/master/tests)
 
 Extract dates and times from text. Fast, deterministic, zero cost.
 
@@ -105,6 +105,26 @@ datetimes = resolve_to_datetime("Show me data from 5 days ago")
 ```
 
 ## Features
+
+### Parse a list of dates and infer missing years
+
+```python
+from fast_parse_time import extract_date_strings, parse_date_strings
+
+texts = ['3/28/2011', '4/22/2011', 'Mar 28', 'Apr 22']
+extract_date_strings(texts)  # ['3/28/2011', '4/22/2011', 'Mar 28', 'Apr 22']
+matches = parse_date_strings(texts)
+matches[2].date  # datetime.date(2011, 3, 28)
+matches[3].date  # datetime.date(2011, 4, 22)
+```
+
+The complete dates define an inclusive range. Missing years are resolved only
+when the range supports them; otherwise `.year` remains `None`. Use
+`date_range=(start, end)` to supply bounds explicitly. Both functions also accept
+a whole prose string. See [Calendar dates and year inference](docs/calendar-dates.md)
+for ambiguity handling and parsed results.
+
+### Extraction formats
 
 - Multiple date formats: `04/08/2024`, `3/24`, `2024-06-05`, `March 15, 2024`
 - Multiple delimiters: `/`, `-`, `.`
