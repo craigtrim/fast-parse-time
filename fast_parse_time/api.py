@@ -14,7 +14,7 @@ Design principles:
 """
 
 from typing import Dict, List, Optional
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from dataclasses import dataclass
 
 from fast_parse_time.explicit.dto import DateType
@@ -22,6 +22,10 @@ from fast_parse_time.explicit.bp import ExplicitTimeExtractor
 from fast_parse_time.explicit.svc import normalize_text
 from fast_parse_time.implicit.svc import AnalyzeTimeReferences, ResolveTimeReferences
 from fast_parse_time.implicit.dto.index_by_slot_kb import Slot
+from fast_parse_time.calendar_dates import (
+    ParsedDate, DateOrder, extract_strings as _extract_date_strings,
+    parse_strings as _parse_date_strings,
+)
 
 
 # ============================================================================
@@ -214,6 +218,51 @@ def extract_explicit_dates(text: str) -> Dict[str, str]:
                 result[key] = val
 
     return result
+
+
+def extract_date_strings(texts: str | list[str]) -> list[str]:
+    """Return original calendar-date strings from one text or a batch.
+
+    Accepts complete dates and month/day dates in prose or as list entries.
+    Preserves source order, spelling, whitespace inside matches, and duplicates.
+    Invalid calendar dates, standalone years, month/year values, and two-digit
+    years are excluded. February 29 without a year remains a valid partial date.
+
+    Example:
+        >>> extract_date_strings(['Term: 3/28/2011 to 4/22/2011', 'Mar 28'])
+        ['3/28/2011', '4/22/2011', 'Mar 28']
+    """
+    return _extract_date_strings(texts)
+
+
+def parse_date_strings(
+    texts: str | list[str], *, date_range: tuple[date, date] | None = None,
+    date_order: DateOrder = 'auto',
+) -> list[ParsedDate]:
+    """Parse calendar dates and infer missing years from an inclusive range.
+
+    One batch represents one period. Without explicit bounds, the earliest and
+    latest distinct, unambiguously parsed full dates define the range. At least
+    two such dates are required; a single year never supplies an implicit range.
+    Explicit ``date_range=(start, end)`` overrides automatically detected bounds.
+
+    Each result retains its text and month/day components. ``date`` is a
+    datetime.date only when exactly one calendar date is supported. ``year``
+    is None when unknown or when multiple years remain possible. ``candidates``
+    exposes remaining concrete interpretations, including unresolved ambiguity.
+    No current year or nearest year is substituted. Explicit full dates retain
+    their own years even when outside the range. Duplicate occurrences remain.
+
+    ``date_order='auto'`` retains both valid numeric month/day interpretations;
+    'mdy' and 'dmy' select an order. Year-first numeric dates always use YMD.
+    Invalid inputs/options raise TypeError or ValueError; empty inputs return [].
+
+    Example:
+        >>> matches = parse_date_strings(['11/28/2025', '4/14/2026', 'March 13'])
+        >>> matches[-1].date
+        datetime.date(2026, 3, 13)
+    """
+    return _parse_date_strings(texts, date_range=date_range, date_order=date_order)
 
 
 def extract_relative_times(text: str) -> List[RelativeTime]:
@@ -489,6 +538,7 @@ __all__ = [
     'RelativeTime',
     'ExplicitDate',
     'ParseResult',
+    'ParsedDate',
     'DateType',
 
     # Simple high-level API
@@ -497,6 +547,8 @@ __all__ = [
 
     # Specific API functions
     'extract_explicit_dates',
+    'extract_date_strings',
+    'parse_date_strings',
     'extract_relative_times',
     'parse_dates_with_type',
     'resolve_to_datetime',

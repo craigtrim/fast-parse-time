@@ -20,6 +20,7 @@ from fast_parse_time.api import (
     RelativeTime,
     ExplicitDate,
     ParseResult,
+    ParsedDate,
     DateType,
 
     # Simple high-level API (recommended for most users)
@@ -28,6 +29,8 @@ from fast_parse_time.api import (
 
     # Specific API functions
     extract_explicit_dates,
+    extract_date_strings,
+    parse_date_strings,
     extract_relative_times,
     parse_dates_with_type,
     resolve_to_datetime,
@@ -64,6 +67,7 @@ __all__ = [
     'RelativeTime',
     'ExplicitDate',
     'ParseResult',
+    'ParsedDate',
     'DateType',
 
     # Simple high-level API
@@ -72,6 +76,8 @@ __all__ = [
 
     # Specific API functions
     'extract_explicit_dates',
+    'extract_date_strings',
+    'parse_date_strings',
     'extract_relative_times',
     'parse_dates_with_type',
     'resolve_to_datetime',
