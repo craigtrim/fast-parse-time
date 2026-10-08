@@ -2,6 +2,10 @@
 
 Data classes and enumerations exported from `fast_parse_time`.
 
+Their definitions live in `fast_parse_time.models`. Imports from
+`fast_parse_time` and `fast_parse_time.api` remain supported and refer to the
+same types.
+
 ---
 
 ## Data Classes

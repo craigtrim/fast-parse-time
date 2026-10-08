@@ -5,7 +5,7 @@
 [![Downloads](https://pepy.tech/badge/fast-parse-time)](https://pepy.tech/project/fast-parse-time)
 [![Downloads](https://pepy.tech/badge/fast-parse-time/month)](https://pepy.tech/project/fast-parse-time)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://img.shields.io/badge/tests-21128-brightgreen.svg)](https://github.com/craigtrim/fast-parse-time/tree/master/tests)
+[![Tests](https://img.shields.io/badge/tests-21170-brightgreen.svg)](https://github.com/craigtrim/fast-parse-time/tree/master/tests)
 
 Extract dates and times from text. Fast, deterministic, zero cost.
 
@@ -148,6 +148,17 @@ for ambiguity handling and parsed results.
 ## Performance
 
 Typical extraction takes < 1ms per document. No network calls, no model inference, pure Python.
+
+## Development
+
+```bash
+python -m pip install -e ".[test]"
+python -m pytest -q
+```
+
+Source lives under `src/fast_parse_time`; install the checkout before running
+tests. See [Development and package layout](docs/development.md) for the module
+structure, compatibility imports, lookup-table maintenance, and wheel testing.
 
 ## License
 
