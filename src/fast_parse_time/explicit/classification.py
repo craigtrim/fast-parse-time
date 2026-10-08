@@ -1,10 +1,9 @@
-#!/usr/bin/env python
-# -*- coding: UTF-8 -*-
-""" Classify Delimited Numerical Dates """
+"""Classify numeric tokens and delimited date expressions."""
 
-
-from fast_parse_time.explicit.dto import DateType, DateComponentType,  MIN_YEAR, MAX_YEAR
-from fast_parse_time.explicit.dmo.stdlib_date_validator import try_parse_date
+from fast_parse_time.models import DateType
+from fast_parse_time.explicit.types import DateComponentType
+from fast_parse_time.explicit.constants import date_delims, MIN_YEAR, MAX_YEAR
+from fast_parse_time.explicit.validation import try_parse_date
 
 
 class DelimitedDateClassifier(object):
@@ -202,3 +201,69 @@ class DelimitedDateClassifier(object):
                 f'Input Text: {input_text} has wrong type: {type(input_text)}')
 
         return result
+
+
+class ClassifyNumericComponents(object):
+    """ Classify Date/Time Extracted Components """
+
+    __delimited_classifer: DelimitedDateClassifier = None
+
+    def __init__(self):
+        """ Change Log
+
+        Created:
+            8-Apr-2024
+            craigtrim@gmail.com
+        """
+        pass
+
+    def _classify_date_type(self,
+                            input_text: str) -> DateType | None:
+
+        _date_delims = [
+            date_delim for date_delim in date_delims
+            if date_delim in input_text
+        ]
+
+        if len(_date_delims) >= 2 and self.isEnabledForWarning:
+            self.logger.warning(
+                f'Unexpected Pattern: Multiple Delimiters Found: {_date_delims} in {input_text}')
+
+        elif len(_date_delims) == 1:
+            if not self.__delimited_classifer:
+                self.__delimited_classifer = DelimitedDateClassifier()
+            delimited_result = self.__delimited_classifer.process(
+                input_text=input_text, delimiter=_date_delims[0])
+            if delimited_result is not None:
+                return delimited_result
+
+        if '-' in input_text:
+
+            def is_valid_year(candidate: str) -> bool:
+                try:
+                    n = int(candidate)
+                    return MIN_YEAR <= n <= MAX_YEAR
+                except ValueError:
+                    pass
+                return False
+
+            input_tokens: list[str] = input_text.split('-')
+
+            if len(input_tokens) == 2 and all(is_valid_year(t) for t in input_tokens):
+                year_a, year_b = int(input_tokens[0]), int(input_tokens[1])
+                if year_a < year_b:
+                    return DateType.YEAR_RANGE
+
+    def process(self,
+                input_tokens: list[str]) -> dict[str, DateType] | None:
+
+        d: dict[str, DateType] = {}
+        for input_token in input_tokens:
+            date_type = self._classify_date_type(input_token)
+            if date_type:
+                d[input_token] = date_type.name
+
+        if not d or not len(d):
+            return None
+
+        return d
