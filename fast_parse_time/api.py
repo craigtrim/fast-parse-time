@@ -237,10 +237,10 @@ def extract_relative_times(text: str) -> List[RelativeTime]:
         [RelativeTime(cardinality=5, frame='day', tense='past')]
     """
     analyzer = AnalyzeTimeReferences()
-    result = analyzer.process(text)
+    solutions = analyzer.process(text)
 
     relative_times = []
-    for item in result.get('result', []):
+    for item in solutions:
         relative_times.append(RelativeTime(
             cardinality=item.cardinality,
             frame=item.frame,

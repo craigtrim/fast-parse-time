@@ -5,13 +5,13 @@
 
 import re
 from typing import Optional
-from baseblock import ServiceEventGenerator
 
 from fast_parse_time.core import configure_logger, Stopwatch
 from fast_parse_time.implicit.dmo import DigitTextReplacer
 from fast_parse_time.implicit.dmo import KeywordSequenceFilter
 from fast_parse_time.implicit.dmo import KeywordSequenceExtractor
 from fast_parse_time.implicit.dmo import SequenceSolutionFinder
+from fast_parse_time.implicit.dto.index_by_slot_kb import Slot
 
 
 # All recognized time unit words (singular, plural, abbreviated forms)
@@ -89,7 +89,6 @@ class AnalyzeTimeReferences(object):
                 https://github.com/craigtrim/fast-parse-time/issues/20
         """
         self.logger = configure_logger(__name__)
-        self._generate_event = ServiceEventGenerator().process
 
         self._digit_replacer = DigitTextReplacer().process
         self._filter_sequences = KeywordSequenceFilter().process
@@ -236,7 +235,7 @@ class AnalyzeTimeReferences(object):
         # Expand each pair into a standalone single-unit sub-expression
         return [[n, unit] + tense_suffix for n, unit in pairs]
 
-    def _solve_sub_tokens(self, sub_tokens: list) -> list:
+    def _solve_sub_tokens(self, sub_tokens: list) -> list[Slot]:
         """Run the KB pipeline on a single-unit token list.
 
         Args:
@@ -250,7 +249,7 @@ class AnalyzeTimeReferences(object):
         return self._find_solutions(seqs)
 
     def _process(self,
-                 input_text: str) -> dict:
+                 input_text: str) -> list[Slot]:
 
         # Expand compact tokens (1d → 1 day, 2y → 2 year, etc.) before tokenization
         # Related GitHub Issue:
@@ -294,27 +293,16 @@ class AnalyzeTimeReferences(object):
         if len(compound_solutions) > len(solutions):
             solutions = compound_solutions
 
-        return {
-            'input_text': input_text,
-            'tokens': tokens,
-            'sequences': sequences,
-            'solutions': solutions
-        }
+        return solutions
 
     def process(self,
-                input_text: str) -> Optional[list]:
+                input_text: str) -> list[Slot]:
+        """Return resolved time slots, or an empty list when none are found."""
         sw = Stopwatch()
 
-        d_result = self._process(input_text)
+        solutions = self._process(input_text)
 
-        # COR-80; Generate an Event Record
-        d_event = self._generate_event(
-            service_name=__name__,
-            event_name='analyze-time-references',
-            stopwatch=sw,
-            data=d_result)
-
-        if not d_result['solutions'] or not len(d_result['solutions']):
+        if not solutions:
             self.logger.debug('\n'.join([
                 'No Solutions Found',
                 f'\tTotal Time: {str(sw)}',
@@ -325,9 +313,6 @@ class AnalyzeTimeReferences(object):
                 'Time Reference Solutions Found',
                 f'\tTotal Time: {str(sw)}',
                 f'\tInput Text: {input_text}',
-                f"\tTotal Solutions: {len(d_result['solutions'])}"]))
+                f'\tTotal Solutions: {len(solutions)}']))
 
-        return {
-            'result': d_result['solutions'],
-            'events': [d_event]
-        }
+        return solutions
