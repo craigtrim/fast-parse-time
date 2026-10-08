@@ -8,33 +8,13 @@ from datetime import date
 import re
 from typing import Literal
 
+from fast_parse_time.models import ParsedDate
+
 
 DateOrder = Literal['auto', 'mdy', 'dmy']
 
 
-@dataclass(frozen=True)
-class ParsedDate:
-    """One original date occurrence, including any unresolved ambiguity.
 
-    ``candidates`` contains calendar-valid dates supported by the text/range.
-    ``date`` is None unless exactly one candidate remains. Month/day/year are
-    None when that component is unknown or differs between interpretations.
-    A yearless date without a usable range has no concrete candidates.
-    """
-
-    text: str
-    month: int | None
-    day: int | None
-    candidates: tuple[date, ...] = ()
-
-    @property
-    def date(self) -> date | None:
-        return self.candidates[0] if len(self.candidates) == 1 else None
-
-    @property
-    def year(self) -> int | None:
-        years = {candidate.year for candidate in self.candidates}
-        return next(iter(years)) if len(years) == 1 else None
 
 
 _MONTH_NAMES = (
