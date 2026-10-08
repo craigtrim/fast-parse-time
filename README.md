@@ -7,10 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Tests](https://img.shields.io/badge/tests-21170-brightgreen.svg)](https://github.com/craigtrim/fast-parse-time/tree/master/tests)
 
-`fast-parse-time` extracts calendar dates and relative time expressions from
-text. The calendar-date functions also accept a list of strings and can use an
-explicit date range to infer missing years. Parsing runs locally without network
-calls or a language model.
+`fast-parse-time` extracts calendar dates and relative time expressions from text. The calendar-date functions also accept a list of strings and can use an explicit date range to infer missing years. Parsing runs locally without network calls or a language model.
 
 ## Install
 
@@ -22,10 +19,7 @@ python -m pip install fast-parse-time
 
 ## Find dates in a list
 
-`extract_date_strings` returns the date text in the order it appears. Each list
-entry can contain a date, a sentence with several dates, or unrelated text.
-Matches retain their spelling and internal whitespace. Repeated dates remain in
-the result.
+`extract_date_strings` returns the date text in the order it appears. Each list entry can contain a date, a sentence with several dates, or unrelated text. Matches retain their spelling and internal whitespace. Repeated dates remain in the result.
 
 ```python
 from fast_parse_time import extract_date_strings
@@ -39,10 +33,7 @@ assert extract_date_strings(texts) == [
 
 ## Parse dates and infer missing years
 
-`parse_date_strings` returns a record for each date occurrence. When at least
-two distinct full dates have unambiguous interpretations, the earliest and
-latest define an inclusive range. A date without a year is resolved only when
-that range supports a single calendar date.
+`parse_date_strings` returns a record for each date occurrence. When at least two distinct full dates have unambiguous interpretations, the earliest and latest define an inclusive range. A date without a year is resolved only when that range supports a single calendar date.
 
 ```python
 from datetime import date
@@ -56,8 +47,7 @@ assert [match.date for match in matches] == [
 ]
 ```
 
-The same inference works when the range crosses a year boundary. Both calendar
-functions accept a whole string as well as a list.
+The same inference works when the range crosses a year boundary. Both calendar functions accept a whole string as well as a list.
 
 ```python
 from datetime import date
@@ -72,20 +62,13 @@ assert matches[-2].text == 'Nov 22'
 assert matches[-2].year is None
 ```
 
-March 13 occurs once inside that range, in 2026. November 22 falls outside it in
-both years, so its year remains unknown. The parser keeps the occurrence in the
-result. It does not substitute the current year.
+March 13 occurs once inside that range, in 2026. November 22 falls outside it in both years, so its year remains unknown. The parser keeps the occurrence in the result rather than substituting the current year.
 
-Use `date_range=(start, end)` to supply your own bounds. If several dates remain
-possible, `.date` is `None` and `.candidates` contains the alternatives. The
-[calendar-date guide](docs/calendar-dates.md) covers numeric date order, leap
-days, and unresolved results.
+Use `date_range=(start, end)` to supply your own bounds. If several dates remain possible, `.date` is `None` and `.candidates` contains the alternatives. The [calendar-date guide](docs/calendar-dates.md) covers numeric date order, leap days, and unresolved results.
 
 ## Extract explicit dates and relative expressions
 
-`parse_dates` returns explicit date text with classification labels, along with
-relative expressions such as `5 days ago`. Use `parse_date_strings` when you need
-calendar dates as Python `date` objects.
+`parse_dates` returns explicit date text with classification labels, along with relative expressions such as `5 days ago`. Use `parse_date_strings` when you need calendar dates as Python `date` objects.
 
 ```python
 from datetime import datetime
@@ -98,8 +81,7 @@ assert result.explicit_dates[0].date_type == 'FULL_EXPLICIT_DATE'
 assert result.relative_times[0].to_datetime(datetime(2026, 1, 1)) == datetime(2025, 12, 27)
 ```
 
-You can also request relative offsets directly. Past references produce negative
-offsets; future references produce positive offsets.
+You can also request relative offsets directly. Past references produce negative offsets; future references produce positive offsets.
 
 ```python
 from datetime import timedelta
@@ -120,17 +102,13 @@ assert resolve_to_timedelta('tomorrow') == [timedelta(days=1)]
 | Explicit date classifications, including year-only and month/year expressions | `extract_explicit_dates` | `dict[str, str]` |
 | Relative expressions as quantities and units | `extract_relative_times` | `list[RelativeTime]` |
 | Relative expressions resolved against a reference time | `resolve_to_datetime` | `list[datetime]` |
+| Relative expressions as signed offsets | `resolve_to_timedelta` | `list[timedelta]` |
 
 ## Interpreting results
 
-Numeric dates can have more than one interpretation. `parse_date_strings`
-preserves that ambiguity by default; use `date_order='mdy'` or `'dmy'` when the
-source's convention is known. A classification such as `FULL_EXPLICIT_DATE`
-identifies a complete date expression without selecting its month/day order.
+Numeric dates can have more than one interpretation. `parse_date_strings` preserves that ambiguity by default; use `date_order='mdy'` or `'dmy'` when the source's convention is known. A classification such as `FULL_EXPLICIT_DATE` identifies a complete date expression without selecting its month/day order.
 
-Keep unrelated periods in separate batches, or supply explicit bounds. Relative
-month and year offsets use 30-day months and 365-day years. Pass a fixed
-`reference` when resolving offsets if the result needs to be reproducible.
+Keep unrelated periods in separate batches, or supply explicit bounds. Relative month and year offsets use 30-day months and 365-day years. Pass a fixed `reference` when resolving offsets if the result needs to be reproducible.
 
 ## Documentation
 
@@ -142,7 +120,6 @@ month and year offsets use 30-day months and 365-day years. Pass a fixed
 
 ## License and author
 
-The library is available under the [MIT license](LICENSE).
-Craig Trim maintains it: [craigtrim@gmail.com](mailto:craigtrim@gmail.com).
+The library is available under the [MIT license](LICENSE). Craig Trim maintains it: [craigtrim@gmail.com](mailto:craigtrim@gmail.com).
 
 [Report an issue](https://github.com/craigtrim/fast-parse-time/issues).
