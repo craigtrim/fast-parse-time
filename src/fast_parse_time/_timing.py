@@ -1,19 +1,6 @@
-#!/usr/bin/env python
-# -*- coding: UTF-8 -*-
-
+"""Monotonic timing for diagnostic logging."""
 
 import time
-import logging
-from logging import Logger
-
-
-def configure_logger(name: str) -> Logger:
-    root_logger = logging.getLogger()
-    if len(root_logger.handlers) > 0:
-        root_logger.setLevel(logging.INFO)
-    else:
-        logging.basicConfig(level=logging.INFO)
-    return logging.getLogger(name)
 
 
 class Stopwatch:
